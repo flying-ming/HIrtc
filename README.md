@@ -13,8 +13,3 @@
 
 ##功能说明
 支持划分房间的在线音频、视频、文字聊天，提供房间内文件共享功能
-
-##SkyRTC项目链接
-[SkyRTC项目](https://github.com/LingyuCoder/SkyRTC)
-
-[SkyRTC-client项目](https://github.com/LingyuCoder/SkyRTC-client)
