@@ -1,14 +1,15 @@
 var MyRTC = function() {
+    var iceServer;
     var PeerConnection = (window.PeerConnection || window.webkitPeerConnection00 || window.webkitRTCPeerConnection || window.mozRTCPeerConnection);
     var URL = (window.URL || window.webkitURL || window.msURL || window.oURL);
     var getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
     var nativeRTCIceCandidate = (window.mozRTCIceCandidate || window.RTCIceCandidate);
     var nativeRTCSessionDescription = (window.mozRTCSessionDescription || window.RTCSessionDescription); // order is very important: "RTCSessionDescription" defined in Nighly but useless
     var moz = !!navigator.mozGetUserMedia;
-    var iceServer = {
+    iceServer = {
         "iceServers": [{
             "url": "stun:stun.l.google.com:19302"
-                // "url": "stun:stun.services.mozilla.com"
+            // "url": "stun:stun.services.mozilla.com"
         }]
     };
     var userid;
