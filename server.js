@@ -11,7 +11,7 @@ var SQL_TABLE = 'user_info';
 var connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '124',
+    password: '1249',
     port: '3306'
 });
 
