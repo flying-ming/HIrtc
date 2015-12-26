@@ -1,7 +1,8 @@
-#一个简单的SkyRTC示例
+#一个简单的WEBRTC项目
 ---
 ##简介
-这是一个使用SkyRTC和SkyRTC-client搭建浏览器中音频、视频、文字聊天室的Demo
+这是一个使用webrtc框架的nodejs项目，能够音频、视频、文字聊天
+参考了SkyRTC
 
 ##安装和使用
 1. 安装Node.js及npm环境
@@ -13,8 +14,3 @@
 
 ##功能说明
 支持划分房间的在线音频、视频、文字聊天，提供房间内文件共享功能
-
-##SkyRTC项目链接
-[SkyRTC项目](https://github.com/LingyuCoder/SkyRTC)
-
-[SkyRTC-client项目](https://github.com/LingyuCoder/SkyRTC-client)
