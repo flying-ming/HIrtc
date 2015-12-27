@@ -435,8 +435,7 @@ function Myrtc() {
                 return;
             }
             var res = result[0];
-            var friend_socket = {};
-            var friend_name = {};
+
             if (res) {
                 //将 好友请求 id 对应 的 socket 找到
                 var userModSql = 'select user_socket,user_name from user_info where user_id=?';
@@ -446,28 +445,32 @@ function Myrtc() {
                         console.log('[ADDUSER ERROR]-', err.message);
                         return;
                     }
+                    var res = result[0];
 
-                    friend_socket = res['user_socket'];
-                    friend_name = res['user_name'];
+                    var friend_socket = res['user_socket'];
+                    var friend_name = res['user_name'];
+
                     console.log(clc.yellow('[ 调试 ]') +"  添加好友时 调试  " + friend_socket);
+
+                   // 将 好友请求 发送给 相应的好友
+                    if (friend_socket) {
+                        soc.send(JSON.stringify({
+                            "eventName": "_reqAddFriend",
+                            "data": {
+                                "friend_id": data.friend_id,
+                                "friend_name": friend_name,
+                                "req_socket": soc
+                            }
+                        }), errorCb);
+                    }
                 });
 
 
-                //将 好友请求 发送给 相应的好友
-                if (friend_socket) {
-                    friend_socket.send(JSON.stringify({
-                        "eventName": "_reqAddFriend",
-                        "data": {
-                            "friend_id": data.friend_id,
-                            "friend_name": friend_name,
-                            "req_socket": soc
-                        }
-                    }), errorCb);
-                }
 
 
             } else {
                 //没有此好友
+                return;
             }
 
         });
