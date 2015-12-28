@@ -174,7 +174,6 @@ function Myrtc() {
     //与客户端交互  客户端连接服务器
     //this.on（）对应着socket.send
     this.on('__join', function (data, socket) {
-        console.log(clc.yellow('[ 调试 ]') + this.sockets.length);
         //ids是每个与服务端相连的socketid
         var ids = [],
             i, m,
@@ -202,7 +201,6 @@ function Myrtc() {
             }), errorCb);
         }
 
-
         curRoom.push(socket);
         socket.room = room;
         //把所有连接服务器的客户端id发给这个新用户
@@ -216,16 +214,16 @@ function Myrtc() {
         //终端输出 有新用户连接服务器
         this.emit('new_peer', socket, room);
     });
-    this.on('__close', function(data,socket){
-        //把    this.userSockets  this.sockets  去掉
-        var i;
-        for(i=0;i<this.sockets.length;i++){
-            if(data.socket == this.userSockets[i]){
-                this.sockets.splice(i,1);
-            }
-            delete this.userSockets[data.userId];
-        }
-    });
+    //this.on('__close', function(data,socket){
+    //    //把    this.userSockets  this.sockets  去掉
+    //    var i;
+    //    for(i=0;i<this.sockets.length;i++){
+    //        if(data.socket == this.userSockets[i]){
+    //            this.sockets.splice(i,1);
+    //        }
+    //        delete this.userSockets[data.userId];
+    //    }
+    //});
     //注册
     this.on('_register', function (data, socket) {
         var that = this;
@@ -236,7 +234,7 @@ function Myrtc() {
         console.log(clc.green('[ 消息 ]') + "注册" + data.userName + data.password);
         connection.query(userModSql, userModSql_Params, function (err, result) {
             if (err) {
-                console.log(clc.red('[ 调试 ]') + '[ADDUSER ERROR]-', err.message);
+                console.log(clc.red('[ 错误 ]') + '[ADDUSER ERROR]-', err.message);
                 return;
             }
             //这时需要向客户端返回用户id
@@ -247,7 +245,7 @@ function Myrtc() {
                         throw err;
                     }
                     // console.log("[ 消息 ]注册成功");
-                    console.log(clc.yellow('[ 调试 ]') + results);
+                    console.log(clc.blue('[ 调试 ]') + results);
                     //这里得到最大的id
                     var maxid;
                     var id = results[0];
@@ -283,7 +281,7 @@ function Myrtc() {
                                 "userName": data.userName
                             }
                         }), errorCb);
-                        console.log(clc.yellow('[ 调试 ]') + maxid + "注册成功");
+                        console.log(clc.blue('[ 调试 ]') + maxid + "注册成功");
                     });
 
                     //用uid赋值socket.name,作为以后socket标识
@@ -403,7 +401,7 @@ function Myrtc() {
                     return;
                 }
             });
-            console.log(clc.yellow('[ 调试 ]') + '创建组操作');
+            console.log(clc.blue('[ 调试 ]') + '创建组操作');
             //创建完成之后需要返回id_Category,默认123
             socket.emit('create_Category', 123);
         } else {
@@ -423,7 +421,7 @@ function Myrtc() {
                         return;
                     }
                 });
-                console.log(clc.yellow('[ 调试 ]') + '组改名操作');
+                console.log(clc.blue('[ 调试 ]') + '组改名操作');
                 socket.emit('rename_Category', -1);
             } else {
                 if (data.flag == 3) {
@@ -443,7 +441,7 @@ function Myrtc() {
                             return;
                         }
                     });
-                    console.log(clc.yellow('[ 调试 ]') + '组成员增减操作');
+                    console.log(clc.blue('[ 调试 ]') + '组成员增减操作');
                     socket.emit('addMember_Category', -1);
                 } else {
                     if (data.flag == 4) {
@@ -453,7 +451,7 @@ function Myrtc() {
                         //	obj.id_Category=...;
                         // }
                         //完成之后返回-1
-                        console.log(clc.yellow('[ 调试 ]') + '开始删除组操作');
+                        console.log(clc.blue('[ 调试 ]') + '开始删除组操作');
                         var categoryid;
 
                         var userid = socket.name;
@@ -486,7 +484,7 @@ function Myrtc() {
                                 }
                             });
                         });
-                        console.log(clc.yellow('[ 调试 ]') + '组删除操作');
+                        console.log(clc.blue('[ 调试 ]') + '组删除操作');
                         socket.emit('del_Category', -1);
                     }
                 }
@@ -501,7 +499,7 @@ function Myrtc() {
     this.on('getCategoryInfo', function (data, socket) {
         // console.log('[ 消息 ]'+' [ 获取分组 ]');
         // 从 数据库中 提取出 分组信息
-        console.log(clc.yellow('[ 调试 ]') + "userid为" + data.userId + "的用户获取好友列表");
+        console.log(clc.blue('[ 调试 ]') + "userid为" + data.userId + "的用户获取好友列表");
         // 从category_info表里面找出组id和组名
         var userGetSql = 'select * from category_info where user_id=?';
         var userGetSql_Params = [data.userId];
@@ -510,7 +508,7 @@ function Myrtc() {
                 console.log('[SELECT ERROR] - ', err.message);
                 return;
             }
-            console.log(clc.yellow('[ 调试 ]') + "申请好友列表时的result为" + result);
+            console.log(clc.blue('[ 调试 ]') + "申请好友列表时的result为" + result);
             var res = result[0];
             var catenameList = res['category_name'];
             //目前项目默认分组id为1
@@ -544,11 +542,6 @@ function Myrtc() {
                     "eventName": "showCategory",
                     "data": {
                         "groups":groups
-                        //"catename": catenameList,
-                        //"friendId":friendId,
-                        //"friendName":friendName,
-                        //"cateid": [1]
-                        // "categoryInfo":user_id
                     }
                 }), errorCb);
             });
@@ -559,18 +552,26 @@ function Myrtc() {
     // 客户端 发起 好友请求
     this.on('__reqFriend', function (data, socket) {
         var that = this;
-        var soc = this.getSocket(data.socketId);
+        //如果添加自己为好友，返回错误
+        if(data.userId == data.friend_id) {
+            that.userSockets[data.userId].send(JSON.stringify({
+                "eventName":"_reqAddFriend",
+                "data":{
+                    flag:1
+                }
+            }),errorCb);
+        }
         //对应 好友 没上线或者没此好友的话返回错误
         var userModSql = 'select user_status from user_info where user_id=?';
         var userModSql_Params = [data.friend_id];
-        //           console.log("  添加好友时" + userModSql_Params);
+        //console.log("  添加好友时" + userModSql_Params);
         connection.query(userModSql, userModSql_Params, function (err, result) {
             if (err) {
                 console.log('[ADDUSER ERROR]-', err.message);
                 return;
             }
             var res = result[0];
-
+            //如果已经是好友，返回错误
             //如果在线
             if (res) {
                 that.userSockets[data.friend_id].send(JSON.stringify({
@@ -586,7 +587,12 @@ function Myrtc() {
                 //如果不在线
             } else {
                 //没有此好友
-                //return;
+                that.userSockets[data.userId].send(JSON.stringify({
+                    "eventName":"_reqAddFriend",
+                    "data":{
+                        flag:1
+                    }
+                }),errorCb);
             }
         });
     });
@@ -1059,19 +1065,19 @@ RTC.rtc.on('new_peer', function (socket, room) {
 });
 
 RTC.rtc.on('socket_message', function (socket, msg) {
-    console.log(clc.yellow('[ 调试 ]') + "接收到来自" + socket.id + "的新消息：" + msg);
+    console.log(clc.blue('[ 调试 ]') + "接收到来自" + socket.id + "的新消息：" + msg);
 });
 
 RTC.rtc.on('ice_candidate', function (socket, ice_candidate) {
-    console.log(clc.yellow('[ 调试 ]') + "接收到来自" + socket.id + "的ICE Candidate");
+    console.log(clc.blue('[ 调试 ]') + "接收到来自" + socket.id + "的ICE Candidate");
 });
 
 RTC.rtc.on('offer', function (socket, offer) {
-    console.log(clc.yellow('[ 调试 ]') + "接收到来自" + socket.id + "的Offer");
+    console.log(clc.blue('[ 调试 ]') + "接收到来自" + socket.id + "的Offer");
 });
 
 RTC.rtc.on('answer', function (socket, answer) {
-    console.log(clc.yellow('[ 调试 ]') + "接收到来自" + socket.id + "的Answer");
+    console.log(clc.blue('[ 调试 ]') + "接收到来自" + socket.id + "的Answer");
 });
 
 RTC.rtc.on('error', function (error) {
