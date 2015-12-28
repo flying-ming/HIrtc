@@ -294,21 +294,14 @@ var MyRTC = function () {
             //var addfriend_name = data.friend_name;
             //var soc = this.getSocket(data.socketId);
             //同意添加   不同意添加
-            var result = confirm("id为"+data.reqFriendId + '名字为'+data.reqFriendName+'的好友请求添加你为好友！'+"验证消息为："+data.reqFriendMessage);
+            $('#friendapplication').modal('show');
+            var modal = $('#friendapplication');
+            modal.find('.friendinfo').text('id为'+data.reqFriendId+ '名字为'+data.reqFriendName+'的好友请求添加你为好友！'+'验证消息为：'+data.reqFriendMessage);
+
+
+            //var result = confirm("id为"+data.reqFriendId + '名字为'+data.reqFriendName+'的好友请求添加你为好友！'+"验证消息为："+data.reqFriendMessage);
             //同意 ,0为同意 ，1 为拒绝
-            if (result) {
-                that.socket.send(JSON.stringify({
-                    "eventName": "__addFriend",
-                    "data": {
-                        "userId": userId,
-                        "userName":userName,
-                        "reqFriendId":data.reqFriendId,
-                        "reqFriendName":data.reqFriendName,
-                        "flag":0
-                    }
-                }));
-            } else {
-                //拒绝添加好友
+            document.getElementsByClassName("btn btn-default").onclick = function(){
                 that.socket.send(JSON.stringify({
                     "eventName": "refuse_addFreiend",
                     "data": {
@@ -318,8 +311,43 @@ var MyRTC = function () {
                         "reqFriendName":data.reqFriendName,
                         "flag":1
                     }
-                }));
-            }
+                }))};
+            document.getElementsByClassName("btn btn-primary").onclick = function(){
+                that.socket.send(JSON.stringify({
+                    "eventName": "__addFriend",
+                    "data": {
+                        "userId": userId,
+                        "userName":userName,
+                        "reqFriendId":data.reqFriendId,
+                        "reqFriendName":data.reqFriendName,
+                        "flag":0
+                    }
+                }));};
+
+            //if (result) {
+            //    that.socket.send(JSON.stringify({
+            //        "eventName": "__addFriend",
+            //        "data": {
+            //            "userId": userId,
+            //            "userName":userName,
+            //            "reqFriendId":data.reqFriendId,
+            //            "reqFriendName":data.reqFriendName,
+            //            "flag":0
+            //        }
+            //    }));
+            //} else {
+            //    //拒绝添加好友
+            //    that.socket.send(JSON.stringify({
+            //        "eventName": "refuse_addFreiend",
+            //        "data": {
+            //            "userId": userId,
+            //            "userName":userName,
+            //            "reqFriendId":data.reqFriendId,
+            //            "reqFriendName":data.reqFriendName,
+            //            "flag":1
+            //        }
+            //    }));
+            //}
 
 
         });
