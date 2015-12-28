@@ -61,7 +61,7 @@
             height: 100%;
         }
 
-        #chat-content {
+        .chat-content {
             position: absolute;
             top: 57px;
             bottom: 72px;
@@ -98,27 +98,27 @@
 
     </style>
     <script type="text/javascript">
-        $().ready(function () {
-            $('.img').jfade();
-            $('.button').jfade({
-                start_opacity: "1",
-                high_opacity: "1",
-                low_opacity: ".4",
-                timing: "500"
-            });
-            $('.text').jfade({
-                start_opacity: "1",
-                high_opacity: "1",
-                low_opacity: ".7",
-                timing: "500"
-            });
-            $('.links').jfade({
-                start_opacity: ".9",
-                high_opacity: "1",
-                low_opacity: ".2",
-                timing: "500"
-            });
-        });
+//        $().ready(function () {
+//            $('.img').jfade();
+//            $('.button').jfade({
+//                start_opacity: "1",
+//                high_opacity: "1",
+//                low_opacity: ".4",
+//                timing: "500"
+//            });
+//            $('.text').jfade({
+//                start_opacity: "1",
+//                high_opacity: "1",
+//                low_opacity: ".7",
+//                timing: "500"
+//            });
+//            $('.links').jfade({
+//                start_opacity: ".9",
+//                high_opacity: "1",
+//                low_opacity: ".2",
+//                timing: "500"
+//            });
+//        });
 
         function renameFunction() {
             // body...
@@ -227,19 +227,19 @@
     <div id="sidebar" class="col-md-3 hide">
         <div id="sign2" class="leftsign"><img src="image/left.png"/></div>
         <div class="leftbody">
-            <ul class="nav nav-tabs" style="width: 100%">
+            <ul id="left-nav" class="nav nav-tabs" style="width: 100%">
                 <li class="active" style="width:33.33333333%; text-align: center; ">
-                    <a href="#panel1" data-toggle="tab">
+                    <a href="#panel1" data-toggle="tab" id="friends">
                         <img style="width:35px;height: 35px" src="image/friends.png">
                     </a>
                 </li>
-                <li style="width:33.333333333%; text-align: center; ">
-                    <a href="#panel2 " data-toggle="tab">
+                <li id="nav-panel-priv-chat" style="width:33.333333333%; text-align: center; ">
+                    <a href="#panel2 " data-toggle="tab" id="private">
                         <img style="width:35px;height: 35px" src="image/session.png">
                     </a>
                 </li>
                 <li style="width:33.33333333%; text-align: center;">
-                    <a href="#panel3" data-toggle="tab">
+                    <a href="#panel3" data-toggle="tab" id="group">
                         <img style="width:35px;height: 35px" src="image/grouptalk.png">
                     </a>
                 </li>
@@ -249,10 +249,11 @@
                     <!--好友列表-->
                     <ul id="accordion" class="accordion">
                     </ul>
+
                     <div class="container-fluid" style="width:100%;">
 
                         <div class="col-xs-4 col-md-4">
-                            <button type="button" class="btn btn-default" data-dismiss="modal" id="renamebtn">重命名
+                            <button type="button" href="#panel2" class="btn btn-default" data-dismiss="modal" id="renamebtn">私聊
                             </button>
                         </div>
                         <!--<div class="col-xs-3 col-md-3"><button type="button" class="btn btn-default" data-dismiss="modal">移动到</button></div> -->
@@ -271,46 +272,6 @@
                 </div>
                 <!--私聊-->
                 <div class="tab-pane" id="panel2">
-                    <div id="chat-content">
-                        <div>私聊</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                    </div>
                     <div class="modal-footer">
                         <input type="file" id="fileIpt" style="position:absolute">
                         <button id="sendFileBtn">发送文件</button>
@@ -329,53 +290,15 @@
                 <!--群聊-->
 
                 <div class="tab-pane" id="panel3">
-                    <div id="chat-content">
-                        <div>群聊</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                    </div>
-                    <div class="modal-footer">
+                    <div id="shipin" style="display: block">点击视频</div>
+                    <div class="msgs" id="msgs"></div>
+                    <div class="modal-footer"  style="display: none">
                         <table>
                             <tr>
                                 <td id="msgbox2">
-                                    <input type="text" style="width:100%;height:100%"/></td>
+                                    <input type="text" id="msgIpt" style="width:100%;height:100%"/></td>
                                 <td>
-                                    <button type="button" class="btn btn-primary" data-dismiss="modal">发送</button>
+                                    <button type="button" id="sendBtn" class="btn btn-primary" data-dismiss="modal">发送</button>
                                 </td>
                             </tr>
                         </table>
@@ -524,6 +447,7 @@
 
 
 </body>
+<script type="text/javascript" src="/js/chat_panel.js"></script>
 <script type="text/javascript" src="/js/client.js"></script>
 <script type="text/javascript">
     var loginBtn = document.getElementById("loginBtn");
@@ -536,6 +460,9 @@
     var rtc = MyRTC();
     var videoBtn = document.getElementById("videoBtn");
     var addFriendBtn = document.getElementById("addfriend");
+    var friend = document.getElementById("friends");
+ //   var privatetalk = document.getElementById("private");
+    var groups = document.getElementById("group");
     /**********************************************************/
     loginBtn.onclick = function (event) {
         //登陆
@@ -556,8 +483,53 @@
     //     // body...
     //     alert("1");
     // };
-
+    var flag = 1;
     videoBtn.onclick = function (event) {
+        if(flag == 1) {
+           // document.getElementById("chat-content_2").style.display = 'block';
+            document.getElementById("group_msg").style.display = 'block';
+            document.getElementById("panel2").style.display = 'none';
+            document.getElementById("panel1").style.display = 'none';
+            document.getElementById("shipin").style.display = 'none';
+            friend.onclick = function(event){
+                document.getElementById("panel1").style.display='block';
+                document.getElementById("panel2").style.display='none';
+    document.getElementById("panel3").style.display='none';
+            };
+//            privatetalk.onclick = function(event){
+//                document.getElementById("panel2").style.display='block';
+//                document.getElementById("panel1").style.display='none';
+//                       document.getElementById("panel3").style.display='none';
+//            };
+            groups.onclick = function(event){
+                document.getElementById("panel3").style.display='block';
+                document.getElementById("panel1").style.display='none';
+                document.getElementById("panel2").style.display='none';
+            };
+            flag = 0;
+        }
+        else{
+            friend.onclick = function(event){
+                document.getElementById("panel1").style.display='block';
+                document.getElementById("panel2").style.display='none';
+                document.getElementById("panel3").style.display='none';
+            };
+            privatetalk.onclick = function(event){
+                document.getElementById("panel2").style.display='block';
+                document.getElementById("panel1").style.display='none';
+                document.getElementById("panel3").style.display='none';
+            };
+            groups.onclick = function(event){
+                document.getElementById("panel3").style.display='block';
+                document.getElementById("panel1").style.display='none';
+                document.getElementById("panel2").style.display='none';
+            };
+          //  document.getElementById("chat-content_2").style.display = 'block';
+            document.getElementById("group_msg").style.display = 'block';
+            document.getElementById("panel2").style.display = 'block';
+            document.getElementById("panel1").style.display = 'none';
+            document.getElementById("shipin").style.display = 'none';
+        }
         rtc.createStream({
             "video": true,
             "audio": true
@@ -566,16 +538,16 @@
     };
 
 
-    // sendBtn.onclick = function(event) {
-    //     var msgIpt = document.getElementById("msgIpt"),
-    //         msg = msgIpt.value,
-    //         p = document.createElement("p");
-    //     p.innerText = "me: " + msg;
-    //     //广播消息
-    //     rtc.broadcast(msg);
-    //     msgIpt.value = "";
-    //     msgs.appendChild(p);
-    // };
+    sendBtn.onclick = function(event) {
+         var msgIpt = document.getElementById("msgIpt"),
+             msg = msgIpt.value,
+             p = document.createElement("p");
+         p.innerText = "me: " + msg;
+         //广播消息
+         rtc.broadcast(msg);
+        msgIpt.value = "";
+         msgs.appendChild(p);
+     };
 
     // sendFileBtn.onclick = function(event) {
     //     //分享文件
@@ -681,9 +653,9 @@
     });
     //接收到文字信息
     rtc.on('data_channel_message', function (channel, socketId, message) {
-        var p = document.createElement("p");
-        p.innerText = socketId + ": " + message;
-        msgs.appendChild(p);
+        var div = document.createElement("div");
+        div.innerText = socketId + ": " + message;
+        msgs.appendChild(div);
     });
     //连接WebSocket服务器
     rtc.connect("wss:" + window.location.href.substring(window.location.protocol.length).split('#')[0], window.location.hash.slice(1));

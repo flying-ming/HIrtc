@@ -11,7 +11,7 @@ var SQL_TABLE = 'user_info';
 var connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'ms888',
+    password: '1234',
     port: '3306'
 });
 
@@ -819,7 +819,9 @@ app.get('/js/jquery.js', function (req, res) {
 app.get('/js/jquery-ui.js', function (req, res) {
     res.sendfile(__dirname + '/js/jquery-ui.js');
 });
-
+app.get('/js/chat_panel.js', function (req, res) {
+    res.sendfile(__dirname + '/js/chat_panel.js');
+});
 // app.get('/js_1/jquery-ui.min.js', function(req, res) {
 //     res.sendfile(__dirname + '/js_1/jquery-ui.min.js');
 // });

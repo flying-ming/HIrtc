@@ -11,6 +11,7 @@ var MyRTC = function () {
             // "url": "stun:stun.services.mozilla.com"
         }]
     };
+    var friendChatPanels = {};
     //保存这个客户端的 userId
     var userId;
     //保存这个哭护短的username
@@ -225,67 +226,101 @@ var MyRTC = function () {
             userId = data.userId;
             userName = data.userName;
             alert("注册成功！！" + "\n" + data.userId + "是你的用户id，下次登陆需要用到，务必记住哦，开始聊天把!");
-//            document.getElementById("loginbox").style.display = 'none';
-//            document.getElementById("chatBox").style.display = 'block';
-//            document.getElementById("side33").style.display = 'block';
+            document.getElementById("loginbox").style.display = 'none';
+            document.getElementById("chatBox").style.display = 'block';
+            document.getElementById("side33").style.display = 'block';
             // this.getCategoryInfo();
         });
 
-        this.on('showCategory', function (data) {
-
+        this.on('showCategory', onShowCategory);
+        function onShowCategory(data) {
+            if ('catename' in data)
+                return;
             // alert("显示分组");
             // alert(data.catename);
+            var groups = data.groups;
+            for (var i = 0; i < groups.length; i++) {
+                var group = groups[i];
+                var groupEl = $('<li><div class="link" name="link"><i class="fa fa-globe"></i>' + group.groupName + '<i class="fa fa-chevron-down"></i></div><ul name="submenu" class="submenu"></ul></li>')
+                var groupFriendEl = groupEl.find('ul');
+                //                cateTab.addEventListener("click", renameFunction);
 
-            if (data.catename != '' && data.catename != null) {
-                for (i = 0; i < data.cateid.length; i++) {
-                    var cateTab = document.createElement("li");
-                    cateTab.innerHTML = '<div class="link" name="link"><i class="fa fa-globe"></i>' + data.cateid[i] + '<i class="fa fa-chevron-down"></i></div><ul name="submenu" class="submenu" id="' + data.cateid[i] + '"></ul>';
-                    document.getElementById("accordion").appendChild(cateTab);
-                    cateTab.addEventListener("click", renameFunction);
-                    for (j = 0; j < data.catename.length; j++) {
-                        var frdTable = document.createElement("li");
-                        frdTable.innerHTML = '<a href="#">' + data.catename[j] + '</a> '
-                        document.getElementById(data.cateid[i]).appendChild(frdTable);
-                    }
+                for (var friendIndex = 0; friendIndex < group.friends.length; friendIndex++) {
+                    (function () {
+                        var friend = group.friends[friendIndex];
+                        var friendEl = $('<li><a href="#">' + friend.name + '</a></li>');
+                        friendEl.click(function () {
+                            var panel;
+                            if (friend.id in friendChatPanels) {
+                                panel = friendChatPanels[friend.id];
+                            } else {
+                                panel = createFriendChatPanel(friend.id);
+                                friendChatPanels[friend.id] = panel;
+                                panel.append($('<span>你正在与 ' + friend.name + '聊天</span>'));
+                                panel.hide();
+                                $('#panel2').prepend(panel);
+                            }
+
+                            //切换到聊天页面
+                            $('.leftbody .nav li.active').removeClass('active');
+                            $('.leftbody .nav li.active a').attr('aria-expanded', false);
+
+                            $('#nav-panel-priv-chat').addClass('active');
+                            $('#nav-panel-priv-chat a').attr('aria-expanded', true);
+
+                            $('.leftbody .tab-content .tab-pane.active').removeClass('active');
+                            $('#panel2').addClass('active');
+
+                            setCurrentFriendChatPanel(panel);
+                        });
+
+                        groupFriendEl.append(friendEl);
+                    })();
                 }
-                //添加点击响应事件
-                //添加点击响应事件
-                // var frdTables = document.getElementsByName("link");
-                // for(var i=0;i<frdTables.length;i++){
-                //     frdTables[i].addEventListener("click",function(){
-                //         this.setAttribute("display","none");
-                //     },false);
-                // }
-                var Accordion = function (el, multiple) {
-                    this.el = el || {};
-                    this.multiple = multiple || false;
-
-                    // Variables privadas
-                    var links = this.el.find('.link');
-                    // Evento
-                    links.on('click', {
-                        el: this.el,
-                        multiple: this.multiple
-                    }, this.dropdown)
-                }
-
-                Accordion.prototype.dropdown = function (e) {
-                    var $el = e.data.el;
-                    $this = $(this),
-                        $next = $this.next();
-
-                    $next.slideToggle();
-                    $this.parent().toggleClass('open');
-
-                    if (!e.data.multiple) {
-                        $el.find('.submenu').not($next).slideUp().parent().removeClass('open');
-                    }
-                    ;
-                }
-
-                var accordion = new Accordion($('#accordion'), false);
+                $('#accordion').append(groupEl);
             }
-        });
+            //添加点击响应事件
+            //添加点击响应事件
+            // var frdTables = document.getElementsByName("link");
+            // for(var i=0;i<frdTables.length;i++){
+            //     frdTables[i].addEventListener("click",function(){
+            //         this.setAttribute("display","none");
+            //     },false);
+            // }
+            var Accordion = function (el, multiple) {
+                this.el = el || {};
+                this.multiple = multiple || false;
+
+                // Variables privadas
+                var links = this.el.find('.link');
+                // Evento
+                links.on('click', {
+                    el: this.el,
+                    multiple: this.multiple
+                }, this.dropdown)
+            }
+
+            Accordion.prototype.dropdown = function (e) {
+                var $el = e.data.el;
+                $this = $(this),
+                    $next = $this.next();
+
+                $next.slideToggle();
+                $this.parent().toggleClass('open');
+
+                if (!e.data.multiple) {
+                    $el.find('.submenu').not($next).slideUp().parent().removeClass('open');
+                }
+                ;
+            }
+
+            var accordion = new Accordion($('#accordion'), false);
+
+        }
+
+        //FIXME Test Code
+        window.onShowCategory = onShowCategory;
+        //FIXME R
 
         /*******************验证好友************************/
         this.on('_reqAddFriend', function (data) {
@@ -296,33 +331,35 @@ var MyRTC = function () {
             //同意添加   不同意添加
             $('#friendapplication').modal('show');
             var modal = $('#friendapplication');
-            modal.find('.friendinfo').text('id为'+data.reqFriendId+ '名字为'+data.reqFriendName+'的好友请求添加你为好友！'+'验证消息为：'+data.reqFriendMessage);
+            modal.find('.friendinfo').text('id为' + data.reqFriendId + '名字为' + data.reqFriendName + '的好友请求添加你为好友！' + '验证消息为：' + data.reqFriendMessage);
 
 
             //var result = confirm("id为"+data.reqFriendId + '名字为'+data.reqFriendName+'的好友请求添加你为好友！'+"验证消息为："+data.reqFriendMessage);
             //同意 ,0为同意 ，1 为拒绝
-            document.getElementsByClassName("btn btn-default").onclick = function(){
+            document.getElementsByClassName("btn btn-default").onclick = function () {
                 that.socket.send(JSON.stringify({
                     "eventName": "refuse_addFreiend",
                     "data": {
                         "userId": userId,
-                        "userName":userName,
-                        "reqFriendId":data.reqFriendId,
-                        "reqFriendName":data.reqFriendName,
-                        "flag":1
+                        "userName": userName,
+                        "reqFriendId": data.reqFriendId,
+                        "reqFriendName": data.reqFriendName,
+                        "flag": 1
                     }
-                }))};
-            document.getElementsByClassName("btn btn-primary").onclick = function(){
+                }))
+            };
+            document.getElementsByClassName("btn btn-primary").onclick = function () {
                 that.socket.send(JSON.stringify({
                     "eventName": "__addFriend",
                     "data": {
                         "userId": userId,
-                        "userName":userName,
-                        "reqFriendId":data.reqFriendId,
-                        "reqFriendName":data.reqFriendName,
-                        "flag":0
+                        "userName": userName,
+                        "reqFriendId": data.reqFriendId,
+                        "reqFriendName": data.reqFriendName,
+                        "flag": 0
                     }
-                }));};
+                }));
+            };
 
             //if (result) {
             //    that.socket.send(JSON.stringify({
@@ -420,8 +457,8 @@ var MyRTC = function () {
             "data": {
                 "friend_id": addfriend_id,
                 "userId": userId,
-                "userName":userName,
-                "reqFriendMessage":addfriend_text
+                "userName": userName,
+                "reqFriendMessage": addfriend_text
             }
         }));
     };
@@ -440,6 +477,10 @@ var MyRTC = function () {
         }));
     };
 
+    /************聊天**************************/
+    myrtc.prototype.msg = function(){
+        return ;
+    }
 
     /*************************流处理部分*******************************/
 
@@ -614,9 +655,11 @@ var MyRTC = function () {
 
         //消息广播
     myrtc.prototype.broadcast = function (message) {
+       // alert("msgtest");
         var socketId;
         for (socketId in this.dataChannels) {
             this.sendMessage(message, socketId);
+            //alert(socketId);
         }
     };
 
