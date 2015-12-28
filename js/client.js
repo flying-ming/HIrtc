@@ -1,4 +1,4 @@
-var MyRTC = function() {
+var MyRTC = function () {
     var PeerConnection = (window.PeerConnection || window.webkitPeerConnection00 || window.webkitRTCPeerConnection || window.mozRTCPeerConnection);
     var URL = (window.URL || window.webkitURL || window.msURL || window.oURL);
     var getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
@@ -8,10 +8,13 @@ var MyRTC = function() {
     var iceServer = {
         "iceServers": [{
             "url": "stun:stun.l.google.com:19302"
-                // "url": "stun:stun.services.mozilla.com"
+            // "url": "stun:stun.services.mozilla.com"
         }]
     };
-    var userid;
+    //保存这个客户端的 userId
+    var userId;
+    //保存这个哭护短的username
+    var userName
     var packetSize = 1000;
 
     /**********************************************************/
@@ -22,13 +25,14 @@ var MyRTC = function() {
     function EventEmitter() {
         this.events = {};
     }
+
     //绑定事件函数
-    EventEmitter.prototype.on = function(eventName, callback) {
+    EventEmitter.prototype.on = function (eventName, callback) {
         this.events[eventName] = this.events[eventName] || [];
         this.events[eventName].push(callback);
     };
     //触发事件函数
-    EventEmitter.prototype.emit = function(eventName, _) {
+    EventEmitter.prototype.emit = function (eventName, _) {
         var events = this.events[eventName],
             args = Array.prototype.slice.call(arguments, 1),
             i, m;
@@ -61,6 +65,8 @@ var MyRTC = function() {
         this.socket = null;
         //本地socket的id，由后台服务器创建
         this.me = null;
+        //保存所有已登录的群成员的 peer connection,键为socket id，值为PeerConnection类型
+        this.groupPeerConnections = {};
         //保存所有与本地相连的peer connection， 键为socket id，值为PeerConnection类型
         this.peerConnections = {};
         //保存所有与本地连接的socket的id
@@ -76,6 +82,7 @@ var MyRTC = function() {
         //保存所有接受到的文件
         this.receiveFiles = {};
     }
+
     //继承自事件处理器，提供绑定事件和触发事件的功能
     myrtc.prototype = new EventEmitter();
 
@@ -83,13 +90,13 @@ var MyRTC = function() {
     /*************************服务器连接部分***************************/
 
 
-    //本地连接信道，信道为websocket
-    myrtc.prototype.connect = function(server, room) {
+        //本地连接信道，信道为websocket
+    myrtc.prototype.connect = function (server, room) {
         var socket,
             that = this;
         room = room || "";
         socket = this.socket = new WebSocket(server);
-        socket.onopen = function() {
+        socket.onopen = function () {
             socket.send(JSON.stringify({
                 "eventName": "__join",
                 "data": {
@@ -105,7 +112,7 @@ var MyRTC = function() {
             }));
         };
 
-        socket.onmessage = function(message) {
+        socket.onmessage = function (message) {
             var json = JSON.parse(message.data);
             if (json.eventName) {
                 that.emit(json.eventName, json.data);
@@ -114,11 +121,11 @@ var MyRTC = function() {
             }
         };
 
-        socket.onerror = function(error) {
+        socket.onerror = function (error) {
             that.emit("socket_error", error, socket);
         };
 
-        socket.onclose = function(data) {
+        socket.onclose = function (data) {
             that.localMediaStream.close();
             var pcs = that.peerConnections;
             for (i = pcs.length; i--;) {
@@ -132,12 +139,12 @@ var MyRTC = function() {
             that.emit('socket_closed', socket);
         };
 
-        this.on('__new', function(data) {
+        this.on('__new', function (data) {
             //获取所有服务器上的
             alert(data.name);
         });
 
-        this.on('_peers', function(data) {
+        this.on('_peers', function (data) {
             //获取所有服务器上的socketid
             that.connections = data.connections;
             that.me = data.you;
@@ -145,7 +152,7 @@ var MyRTC = function() {
             that.emit('connected', socket);
         });
 
-        this.on("_ice_candidate", function(data) {
+        this.on("_ice_candidate", function (data) {
             var candidate = new nativeRTCIceCandidate(data);
             var pc = that.peerConnections[data.socketId];
             pc.addIceCandidate(candidate);
@@ -153,7 +160,7 @@ var MyRTC = function() {
         });
 
         //有新用户 连接服务器 把他加入 connections中保存
-        this.on('_new_peer', function(data) {
+        this.on('_new_peer', function (data) {
             that.connections.push(data.socketId);
             var pc = that.createPeerConnection(data.socketId),
                 i, m;
@@ -162,7 +169,7 @@ var MyRTC = function() {
         });
 
         //有用户离开
-        this.on('_remove_peer', function(data) {
+        this.on('_remove_peer', function (data) {
             var sendId;
             that.closePeerConnection(that.peerConnections[data.socketId]);
             delete that.peerConnections[data.socketId];
@@ -174,54 +181,57 @@ var MyRTC = function() {
             that.emit("remove_peer", data.socketId);
         });
 
-        this.on('_offer', function(data) {
+        this.on('_offer', function (data) {
             that.receiveOffer(data.socketId, data.sdp);
             that.emit("get_offer", data);
         });
 
-        this.on('_answer', function(data) {
+        this.on('_answer', function (data) {
             that.receiveAnswer(data.socketId, data.sdp);
             that.emit('get_answer', data);
         });
 
-        this.on('send_file_error', function(error, socketId, sendId, file) {
+        this.on('send_file_error', function (error, socketId, sendId, file) {
             that.cleanSendFile(sendId, socketId);
         });
 
-        this.on('receive_file_error', function(error, sendId) {
+        this.on('receive_file_error', function (error, sendId) {
             that.cleanReceiveFile(sendId);
         });
 
-        this.on('ready', function() {
+        this.on('ready', function () {
             that.createPeerConnections();
             that.addStreams();
             that.addDataChannels();
             that.sendOffers();
         });
 
-        this.on('password', function(data) {
+        this.on('password', function (data) {
             if (data.flag) {
-                alert('登陆了');
-                document.getElementById("userid").value = '';
+                //alert('登陆了');
+                userId = data.userId;
+                userName = data.userName;
+                document.getElementById("userId").value = '';
                 document.getElementById("loginbox").style.display = 'none';
                 document.getElementById("chatBox").style.display = 'block';
                 document.getElementById("side33").style.display = 'block';
-				document.getElementById("sign1").style.display = 'block';
+                document.getElementById("sign1").style.display = 'block';
                 // this.getCategoryInfo();
             } else
                 alert('denglu shibai');
         });
 
-        this.on('register', function(data) {
-            userid = data.userid;
-            alert("注册成功！！" + "\n" + data.userid + "是你的用户id，下次登陆需要用到，务必记住哦，开始聊天把!");
+        this.on('register', function (data) {
+            userId = data.userId;
+            userName = data.userName;
+            alert("注册成功！！" + "\n" + data.userId + "是你的用户id，下次登陆需要用到，务必记住哦，开始聊天把!");
 //            document.getElementById("loginbox").style.display = 'none';
 //            document.getElementById("chatBox").style.display = 'block';
 //            document.getElementById("side33").style.display = 'block';
             // this.getCategoryInfo();
         });
 
-        this.on('showCategory', function(data) {
+        this.on('showCategory', function (data) {
 
             // alert("显示分组");
             // alert(data.catename);
@@ -231,22 +241,22 @@ var MyRTC = function() {
                     var cateTab = document.createElement("li");
                     cateTab.innerHTML = '<div class="link" name="link"><i class="fa fa-globe"></i>' + data.cateid[i] + '<i class="fa fa-chevron-down"></i></div><ul name="submenu" class="submenu" id="' + data.cateid[i] + '"></ul>';
                     document.getElementById("accordion").appendChild(cateTab);
-                    cateTab.addEventListener("click",renameFunction);
+                    cateTab.addEventListener("click", renameFunction);
                     for (j = 0; j < data.catename.length; j++) {
                         var frdTable = document.createElement("li");
-                        frdTable.innerHTML = '<a href="#">'+ data.catename[j] + '</a> '
+                        frdTable.innerHTML = '<a href="#">' + data.catename[j] + '</a> '
                         document.getElementById(data.cateid[i]).appendChild(frdTable);
                     }
                 }
                 //添加点击响应事件
                 //添加点击响应事件
-                 // var frdTables = document.getElementsByName("link");
-                 // for(var i=0;i<frdTables.length;i++){
-                 //     frdTables[i].addEventListener("click",function(){
-                 //         this.setAttribute("display","none");
-                 //     },false);
-                 // }
-                var Accordion = function(el, multiple) {
+                // var frdTables = document.getElementsByName("link");
+                // for(var i=0;i<frdTables.length;i++){
+                //     frdTables[i].addEventListener("click",function(){
+                //         this.setAttribute("display","none");
+                //     },false);
+                // }
+                var Accordion = function (el, multiple) {
                     this.el = el || {};
                     this.multiple = multiple || false;
 
@@ -259,7 +269,7 @@ var MyRTC = function() {
                     }, this.dropdown)
                 }
 
-                Accordion.prototype.dropdown = function(e) {
+                Accordion.prototype.dropdown = function (e) {
                     var $el = e.data.el;
                     $this = $(this),
                         $next = $this.next();
@@ -269,7 +279,8 @@ var MyRTC = function() {
 
                     if (!e.data.multiple) {
                         $el.find('.submenu').not($next).slideUp().parent().removeClass('open');
-                    };
+                    }
+                    ;
                 }
 
                 var accordion = new Accordion($('#accordion'), false);
@@ -277,72 +288,66 @@ var MyRTC = function() {
         });
 
         /*******************验证好友************************/
-        this.on('_reqAddFriend',function(data){
-            var addfriend_id = data.friend_id;
-            var addfriend_name = data.friend_name;
-            var soc = this.getSocket(data.socketId);
+        this.on('_reqAddFriend', function (data) {
+            //alert("收到好友请求");
+            //var addfriend_id = data.reqFriendid;
+            //var addfriend_name = data.friend_name;
+            //var soc = this.getSocket(data.socketId);
             //同意添加   不同意添加
-            var result = confirm(data.friend_name+'请求添加你为好友！');
-            if(result)
-            {
-                alert('同意添加'+data.friend_name+'为好友！');
-                if(req_socket){
-                    req_socket.send(JSON.stringify({
-                        "eventName": "__addFriend",
-                        "data": {
-                            "friend_id":addfriend_id,
-                            "friend_name":addfriend_name,
-                            "user_id":userid,
-                            "req_socket":soc
-                        }
-                    }),errorCb);
-                }
-                else
-                    {return;}
-            }
-            else
-            {
+            var result = confirm("id为"+data.reqFriendId + '名字为'+data.reqFriendName+'的好友请求添加你为好友！'+"验证消息为："+data.reqFriendMessage);
+            //同意 ,0为同意 ，1 为拒绝
+            if (result) {
+                that.socket.send(JSON.stringify({
+                    "eventName": "__addFriend",
+                    "data": {
+                        "userId": userId,
+                        "userName":userName,
+                        "reqFriendId":data.reqFriendId,
+                        "reqFriendName":data.reqFriendName,
+                        "flag":0
+                    }
+                }));
+            } else {
                 //拒绝添加好友
-                alert('拒绝添加'+data.friend_name+'为好友！');
-                req_socket.send(JSON.stringify({
+                that.socket.send(JSON.stringify({
                     "eventName": "refuse_addFreiend",
                     "data": {
-                        "friend_id":addfriend_id,
-                        "friend_name":addfriend_name,
-                        "user_id":userid,
-                        "req_socket":soc
+                        "userId": userId,
+                        "userName":userName,
+                        "reqFriendId":data.reqFriendId,
+                        "reqFriendName":data.reqFriendName,
+                        "flag":1
                     }
-                }),errorCb);
+                }));
             }
-
-
 
 
         });
 
-            /**************************拒绝添加好友****************************************/
+        /**************************拒绝添加好友****************************************/
 
-            this.on('refuse_addFreiend',function(data){
-                if(!data.flag){
-                    alert(data.friend_name+'拒绝添加你为好友！');
-                }
-                else
-                    {return;}
-            });
-             /**************************验证删除好友成功**************************************/
-             this.on('delFriend', function(data) {
+        this.on('refuse_addFreiend', function (data) {
+            if (!data.flag) {
+                alert(data.friend_name + '拒绝添加你为好友！');
+            }
+            else {
+                return;
+            }
+        });
+        /**************************验证删除好友成功**************************************/
+        this.on('delFriend', function (data) {
 
-                 if (!data.flag) {
-                     alert('删除成功');
-                 } else
-                     {return;}
-         });
+            if (!data.flag) {
+                alert('删除成功');
+            } else {
+                return;
+            }
+        });
     };
 
 
-
     /*************************客户端登陆部分*******************************/
-    myrtc.prototype.register = function() {
+    myrtc.prototype.register = function () {
         var that = this;
         var username = document.getElementById("nickname").value;
         var password = document.getElementById("registerPassword").value;
@@ -354,52 +359,55 @@ var MyRTC = function() {
             }
         }));
     };
-    myrtc.prototype.clientLogin = function() {
+    myrtc.prototype.clientLogin = function () {
         var that = this;
         var password = document.getElementById("password").value;
-        userid = document.getElementById("userid").value;
+        userId = document.getElementById("userId").value;
         that.socket.send(JSON.stringify({
             "eventName": "__login",
             "data": {
-                "userid": userid,
+                "userId": userId,
                 "password": password
             }
         }));
 
     };
-    myrtc.prototype.getCategoryInfo = function() {
+    myrtc.prototype.getCategoryInfo = function () {
         var that = this;
         that.socket.send(JSON.stringify({
             "eventName": "getCategoryInfo",
             "data": {
-                "userid": userid
+                "userId": userId
             }
         }));
     };
     /*************************添加好友*****************************/
-    myrtc.prototype.reqfriend = function(){
+    myrtc.prototype.reqfriend = function () {
         var that = this;
         var addfriend_id = document.getElementById("addfriend_id").value;
- //       var addfriend_text = document.getElementById("addfriend_text").value;
+        var addfriend_text = document.getElementById("addfriend_text").value;
         alert(addfriend_id);
         that.socket.send(JSON.stringify({
-            "eventName":"__reqFriend",
-            "data":{
-                "friend_id":addfriend_id
+            "eventName": "__reqFriend",
+            "data": {
+                "friend_id": addfriend_id,
+                "userId": userId,
+                "userName":userName,
+                "reqFriendMessage":addfriend_text
             }
         }));
     };
 
     /*************************删除好友****************************/
-    myrtc.prototype.delfriend = function(){
+    myrtc.prototype.delfriend = function () {
         var that = this;
         var delfriend_id = document.getElementById("delfriend_id").value;
 
         that.socket.send(JSON.stringify({
-            "eventName":"__delFriend",
-            "data":{
-                "friend_id":delfriend_id,
-                "user_id":userid
+            "eventName": "__delFriend",
+            "data": {
+                "friend_id": delfriend_id,
+                "user_id": userId
             }
         }));
     };
@@ -408,8 +416,8 @@ var MyRTC = function() {
     /*************************流处理部分*******************************/
 
 
-    //创建本地流
-    myrtc.prototype.createStream = function(options) {
+        //创建本地流
+    myrtc.prototype.createStream = function (options) {
         var that = this;
 
         options.video = !!options.video;
@@ -417,7 +425,7 @@ var MyRTC = function() {
 
         if (getUserMedia) {
             this.numStreams++;
-            getUserMedia.call(navigator, options, function(stream) {
+            getUserMedia.call(navigator, options, function (stream) {
                     that.localMediaStream = stream;
                     that.initializedStreams++;
                     that.emit("stream_created", stream);
@@ -425,7 +433,7 @@ var MyRTC = function() {
                         that.emit("ready");
                     }
                 },
-                function(error) {
+                function (error) {
                     that.emit("stream_create_error", error);
                 });
         } else {
@@ -434,7 +442,7 @@ var MyRTC = function() {
     };
 
     //将本地流添加到所有的PeerConnection实例中
-    myrtc.prototype.addStreams = function() {
+    myrtc.prototype.addStreams = function () {
         var i, m,
             stream,
             connection;
@@ -444,7 +452,7 @@ var MyRTC = function() {
     };
 
     //将流绑定到video标签上用于输出
-    myrtc.prototype.attachStream = function(stream, domId) {
+    myrtc.prototype.attachStream = function (stream, domId) {
         var element = document.getElementById(domId);
         if (navigator.mozGetUserMedia) {
             element.mozSrcObject = stream;
@@ -459,13 +467,13 @@ var MyRTC = function() {
     /***********************信令交换部分*******************************/
 
 
-    //向所有PeerConnection发送Offer类型信令
-    myrtc.prototype.sendOffers = function() {
+        //向所有PeerConnection发送Offer类型信令
+    myrtc.prototype.sendOffers = function () {
         var i, m,
             pc,
             that = this,
-            pcCreateOfferCbGen = function(pc, socketId) {
-                return function(session_desc) {
+            pcCreateOfferCbGen = function (pc, socketId) {
+                return function (session_desc) {
                     pc.setLocalDescription(session_desc);
                     that.socket.send(JSON.stringify({
                         "eventName": "__offer",
@@ -476,7 +484,7 @@ var MyRTC = function() {
                     }));
                 };
             },
-            pcCreateOfferErrorCb = function(error) {
+            pcCreateOfferErrorCb = function (error) {
                 console.log(error);
             };
         for (i = 0, m = this.connections.length; i < m; i++) {
@@ -486,17 +494,17 @@ var MyRTC = function() {
     };
 
     //接收到Offer类型信令后作为回应返回answer类型信令
-    myrtc.prototype.receiveOffer = function(socketId, sdp) {
+    myrtc.prototype.receiveOffer = function (socketId, sdp) {
         var pc = this.peerConnections[socketId];
         this.sendAnswer(socketId, sdp);
     };
 
     //发送answer类型信令
-    myrtc.prototype.sendAnswer = function(socketId, sdp) {
+    myrtc.prototype.sendAnswer = function (socketId, sdp) {
         var pc = this.peerConnections[socketId];
         var that = this;
         pc.setRemoteDescription(new nativeRTCSessionDescription(sdp));
-        pc.createAnswer(function(session_desc) {
+        pc.createAnswer(function (session_desc) {
             pc.setLocalDescription(session_desc);
             that.socket.send(JSON.stringify({
                 "eventName": "__answer",
@@ -505,13 +513,13 @@ var MyRTC = function() {
                     "sdp": session_desc
                 }
             }));
-        }, function(error) {
+        }, function (error) {
             console.log(error);
         });
     };
 
     //接收到answer类型信令后将对方的session描述写入PeerConnection中
-    myrtc.prototype.receiveAnswer = function(socketId, sdp) {
+    myrtc.prototype.receiveAnswer = function (socketId, sdp) {
         var pc = this.peerConnections[socketId];
         pc.setRemoteDescription(new nativeRTCSessionDescription(sdp));
     };
@@ -520,8 +528,8 @@ var MyRTC = function() {
     /***********************点对点连接部分*****************************/
 
 
-    //创建与其他用户连接的PeerConnections
-    myrtc.prototype.createPeerConnections = function() {
+        //创建与其他用户连接的PeerConnections
+    myrtc.prototype.createPeerConnections = function () {
         var i, m;
         for (i = 0, m = this.connections.length; i < m; i++) {
             this.createPeerConnection(this.connections[i]);
@@ -529,11 +537,11 @@ var MyRTC = function() {
     };
 
     //创建单个PeerConnection
-    myrtc.prototype.createPeerConnection = function(socketId) {
+    myrtc.prototype.createPeerConnection = function (socketId) {
         var that = this;
         var pc = new PeerConnection(iceServer);
         this.peerConnections[socketId] = pc;
-        pc.onicecandidate = function(evt) {
+        pc.onicecandidate = function (evt) {
             if (evt.candidate)
                 that.socket.send(JSON.stringify({
                     "eventName": "__ice_candidate",
@@ -546,20 +554,20 @@ var MyRTC = function() {
             that.emit("pc_get_ice_candidate", evt.candidate, socketId, pc);
         };
 
-        pc.onopen = function() {
+        pc.onopen = function () {
             that.emit("pc_opened", socketId, pc);
         };
 
         pc.alert = function () {
-             alert("调试");
+            alert("调试");
         }
 
-        pc.onaddstream = function(evt) {
+        pc.onaddstream = function (evt) {
             that.emit('pc_add_stream', evt.stream, socketId, pc);
             alert("有视频接入");
         };
 
-        pc.ondatachannel = function(evt) {
+        pc.ondatachannel = function (evt) {
             that.addDataChannel(socketId, evt.channel);
             that.emit('pc_add_data_channel', evt.channel, socketId, pc);
         };
@@ -567,7 +575,7 @@ var MyRTC = function() {
     };
 
     //关闭PeerConnection连接
-    myrtc.prototype.closePeerConnection = function(pc) {
+    myrtc.prototype.closePeerConnection = function (pc) {
         if (!pc) return;
         pc.close();
     };
@@ -576,8 +584,8 @@ var MyRTC = function() {
     /***********************数据通道连接部分*****************************/
 
 
-    //消息广播
-    myrtc.prototype.broadcast = function(message) {
+        //消息广播
+    myrtc.prototype.broadcast = function (message) {
         var socketId;
         for (socketId in this.dataChannels) {
             this.sendMessage(message, socketId);
@@ -585,7 +593,7 @@ var MyRTC = function() {
     };
 
     //发送消息方法
-    myrtc.prototype.sendMessage = function(message, socketId) {
+    myrtc.prototype.sendMessage = function (message, socketId) {
         if (this.dataChannels[socketId].readyState.toLowerCase() === 'open') {
             this.dataChannels[socketId].send(JSON.stringify({
                 type: "__msg",
@@ -595,7 +603,7 @@ var MyRTC = function() {
     };
 
     //对所有的PeerConnections创建Data channel
-    myrtc.prototype.addDataChannels = function() {
+    myrtc.prototype.addDataChannels = function () {
         var connection;
         for (connection in this.peerConnections) {
             this.createDataChannel(connection);
@@ -603,7 +611,7 @@ var MyRTC = function() {
     };
 
     //对某一个PeerConnection创建Data channel
-    myrtc.prototype.createDataChannel = function(socketId, label) {
+    myrtc.prototype.createDataChannel = function (socketId, label) {
         var pc, key, channel;
         pc = this.peerConnections[socketId];
 
@@ -624,18 +632,18 @@ var MyRTC = function() {
     };
 
     //为Data channel绑定相应的事件回调函数
-    myrtc.prototype.addDataChannel = function(socketId, channel) {
+    myrtc.prototype.addDataChannel = function (socketId, channel) {
         var that = this;
-        channel.onopen = function() {
+        channel.onopen = function () {
             that.emit('data_channel_opened', channel, socketId);
         };
 
-        channel.onclose = function(event) {
+        channel.onclose = function (event) {
             delete that.dataChannels[socketId];
             that.emit('data_channel_closed', channel, socketId);
         };
 
-        channel.onmessage = function(message) {
+        channel.onmessage = function (message) {
             var json;
             json = JSON.parse(message.data);
             if (json.type === '__file') {
@@ -646,14 +654,13 @@ var MyRTC = function() {
             }
         };
 
-        channel.onerror = function(err) {
+        channel.onerror = function (err) {
             that.emit('data_channel_error', channel, socketId, err);
         };
 
         this.dataChannels[socketId] = channel;
         return channel;
     };
-
 
 
     /**********************************************************/
@@ -664,8 +671,8 @@ var MyRTC = function() {
 
     /************************公有部分************************/
 
-    //解析Data channel上的文件类型包,来确定信令类型
-    myrtc.prototype.parseFilePacket = function(json, socketId) {
+        //解析Data channel上的文件类型包,来确定信令类型
+    myrtc.prototype.parseFilePacket = function (json, socketId) {
         var signal = json.signal,
             that = this;
         if (signal === 'ask') {
@@ -684,8 +691,8 @@ var MyRTC = function() {
     /***********************发送者部分***********************/
 
 
-    //通过Dtata channel向房间内所有其他用户广播文件
-    myrtc.prototype.shareFile = function(dom) {
+        //通过Dtata channel向房间内所有其他用户广播文件
+    myrtc.prototype.shareFile = function (dom) {
         var socketId,
             that = this;
         for (socketId in that.dataChannels) {
@@ -694,7 +701,7 @@ var MyRTC = function() {
     };
 
     //向某一单个用户发送文件
-    myrtc.prototype.sendFile = function(dom, socketId) {
+    myrtc.prototype.sendFile = function (dom, socketId) {
         var that = this,
             file,
             reader,
@@ -724,7 +731,7 @@ var MyRTC = function() {
     };
 
     //发送多个文件的碎片
-    myrtc.prototype.sendFileChunks = function() {
+    myrtc.prototype.sendFileChunks = function () {
         var socketId,
             sendId,
             that = this,
@@ -738,14 +745,14 @@ var MyRTC = function() {
             }
         }
         if (nextTick) {
-            setTimeout(function() {
+            setTimeout(function () {
                 that.sendFileChunks();
             }, 10);
         }
     };
 
     //发送某个文件的碎片
-    myrtc.prototype.sendFileChunk = function(socketId, sendId) {
+    myrtc.prototype.sendFileChunk = function (socketId, sendId) {
         var that = this,
             fileToSend = that.fileChannels[socketId][sendId],
             packet = {
@@ -783,11 +790,11 @@ var MyRTC = function() {
     };
 
     //发送文件请求后若对方同意接受,开始传输
-    myrtc.prototype.receiveFileAccept = function(sendId, socketId) {
+    myrtc.prototype.receiveFileAccept = function (sendId, socketId) {
         var that = this,
             fileToSend,
             reader,
-            initSending = function(event, text) {
+            initSending = function (event, text) {
                 fileToSend.state = "send";
                 fileToSend.fileData = event.target.result;
                 fileToSend.sendedPackets = 0;
@@ -802,7 +809,7 @@ var MyRTC = function() {
     };
 
     //发送文件请求后若对方拒绝接受,清除掉本地的文件信息
-    myrtc.prototype.receiveFileRefuse = function(sendId, socketId) {
+    myrtc.prototype.receiveFileRefuse = function (sendId, socketId) {
         var that = this;
         that.fileChannels[socketId][sendId].state = "refused";
         that.emit("send_file_refused", sendId, socketId, that.fileChannels[socketId][sendId].file);
@@ -810,13 +817,13 @@ var MyRTC = function() {
     };
 
     //清除发送文件缓存
-    myrtc.prototype.cleanSendFile = function(sendId, socketId) {
+    myrtc.prototype.cleanSendFile = function (sendId, socketId) {
         var that = this;
         delete that.fileChannels[socketId][sendId];
     };
 
     //发送文件请求
-    myrtc.prototype.sendAsk = function(socketId, sendId, fileToSend) {
+    myrtc.prototype.sendAsk = function (socketId, sendId, fileToSend) {
         var that = this,
             channel = that.dataChannels[socketId],
             packet;
@@ -834,15 +841,15 @@ var MyRTC = function() {
     };
 
     //获得随机字符串来生成文件发送ID
-    myrtc.prototype.getRandomString = function() {
+    myrtc.prototype.getRandomString = function () {
         return (Math.random() * new Date().getTime()).toString(36).toUpperCase().replace(/\./g, '-');
     };
 
     /***********************接收者部分***********************/
 
 
-    //接收到文件碎片
-    myrtc.prototype.receiveFileChunk = function(data, sendId, socketId, last, percent) {
+        //接收到文件碎片
+    myrtc.prototype.receiveFileChunk = function (data, sendId, socketId, last, percent) {
         var that = this,
             fileInfo = that.receiveFiles[sendId];
         if (!fileInfo.data) {
@@ -860,7 +867,7 @@ var MyRTC = function() {
     };
 
     //接收到所有文件碎片后将其组合成一个完整的文件并自动下载
-    myrtc.prototype.getTransferedFile = function(sendId) {
+    myrtc.prototype.getTransferedFile = function (sendId) {
         var that = this,
             fileInfo = that.receiveFiles[sendId],
             hyperlink = document.createElement("a"),
@@ -880,7 +887,7 @@ var MyRTC = function() {
     };
 
     //接收到发送文件请求后记录文件信息
-    myrtc.prototype.receiveFileAsk = function(sendId, fileName, fileSize, socketId) {
+    myrtc.prototype.receiveFileAsk = function (sendId, fileName, fileSize, socketId) {
         var that = this;
         that.receiveFiles[sendId] = {
             socketId: socketId,
@@ -892,7 +899,7 @@ var MyRTC = function() {
     };
 
     //发送同意接收文件信令
-    myrtc.prototype.sendFileAccept = function(sendId) {
+    myrtc.prototype.sendFileAccept = function (sendId) {
         var that = this,
             fileInfo = that.receiveFiles[sendId],
             channel = that.dataChannels[fileInfo.socketId],
@@ -909,7 +916,7 @@ var MyRTC = function() {
     };
 
     //发送拒绝接受文件信令
-    myrtc.prototype.sendFileRefuse = function(sendId) {
+    myrtc.prototype.sendFileRefuse = function (sendId) {
         var that = this,
             fileInfo = that.receiveFiles[sendId],
             channel = that.dataChannels[fileInfo.socketId],
@@ -927,7 +934,7 @@ var MyRTC = function() {
     };
 
     //清除接受文件缓存
-    myrtc.prototype.cleanReceiveFile = function(sendId) {
+    myrtc.prototype.cleanReceiveFile = function (sendId) {
         var that = this;
         delete that.receiveFiles[sendId];
     };

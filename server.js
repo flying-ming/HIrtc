@@ -11,7 +11,7 @@ var SQL_TABLE = 'user_info';
 var connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'hf1234',
+    password: 'ms888nnn',
     port: '3306'
 });
 
@@ -130,7 +130,7 @@ connection.query('SHOW CREATE TABLE CATEGORY_INFO', function (err) {
 var userModSql = 'update user_info set user_status=0';
 connection.query(userModSql, function (err, result) {
     if (err) {
-        console.log(clc.red('[ 错误 ]') +'[ADDUSER ERROR]-', err.message);
+        console.log(clc.red('[ 错误 ]') + '[ADDUSER ERROR]-', err.message);
         return;
     }
 
@@ -149,12 +149,16 @@ var errorCb = function (rtc) {
 };
 
 function Myrtc() {
+    //用来保存 登陆用户的socket ，键是 userId ，值是 socket
+    this.userSockets = {};
     this.sockets = [];
+    //记录下 所有登陆成功的 user
+    this.userId = [];
     this.rooms = {};
     //与客户端交互  客户端连接服务器
     //this.on（）对应着socket.send
     this.on('__join', function (data, socket) {
-        console.log(clc.yellow('[ 调试 ]') +this.sockets.length);
+        console.log(clc.yellow('[ 调试 ]') + this.sockets.length);
         //ids是每个与服务端相连的socketid
         var ids = [],
             i, m,
@@ -198,14 +202,15 @@ function Myrtc() {
 
     //注册
     this.on('_register', function (data, socket) {
+        var that = this;
         //首先在数据库里新增一个用户
         var SQL_TABLE = 'user_info';
         var userModSql = 'INSERT INTO' + '  ' + SQL_TABLE + ' ' + 'SET user_name=?,user_key =?,user_status=0';
-        var userModSql_Params = [data.username, data.password];
-        console.log(clc.green('[ 消息 ]') +"注册" + data.username + data.password);
+        var userModSql_Params = [data.userName, data.password];
+        console.log(clc.green('[ 消息 ]') + "注册" + data.userName + data.password);
         connection.query(userModSql, userModSql_Params, function (err, result) {
             if (err) {
-                console.log(clc.red('[ 调试 ]') +'[ADDUSER ERROR]-', err.message);
+                console.log(clc.red('[ 调试 ]') + '[ADDUSER ERROR]-', err.message);
                 return;
             }
             //这时需要向客户端返回用户id
@@ -216,30 +221,34 @@ function Myrtc() {
                         throw err;
                     }
                     // console.log("[ 消息 ]注册成功");
-                    console.log(clc.yellow('[ 调试 ]') +results);
+                    console.log(clc.yellow('[ 调试 ]') + results);
                     //这里得到最大的id
                     var maxid;
                     var id = results[0];
                     maxid = id['max(user_id)'];
                     console.log(clc.green('[ 消息 ]') + maxid + "注册成功");
-                    //更新登陆状态
+                    //更新登陆状态 记录为在线
                     var userModSql = 'update user_info set user_status=1,user_socket=? where user_id=?';
                     var userModSql_Params = [socket.id, maxid];
                     connection.query(userModSql, userModSql_Params, function (err, result) {
                         if (err) {
-                            console.log('[ADDUSER ERROR]-', err.message);
+                            console.log(clc.red('[ 错误 ]' + ':更新状态'), err.message);
                             return;
                         }
-
+                        //将此用户的socket加入服务器全局变量中
+                        that.userId.push(maxid);
+                        that.userSockets[maxid] = socket;
+                        //告诉新用户，注册成功
+                        socket.send(JSON.stringify({
+                            "eventName": "register",
+                            "data": {
+                                "flag": 1,
+                                "userId": maxid,
+                                "userName":data.userName
+                            }
+                        }), errorCb);
                     });
 
-                    socket.send(JSON.stringify({
-                        "eventName": "register",
-                        "data": {
-                            "flag": 1,
-                            "userid": maxid
-                        }
-                    }), errorCb);
                     //用uid赋值socket.name,作为以后socket标识
                     // socket.name = maxid;
                     //这里记录下每个用户登陆的socket
@@ -252,10 +261,10 @@ function Myrtc() {
 
     //login,客户端登陆时与服务端的交互
     this.on('__login', function (data, socket) {
-
+        var that = this;
         console.log(clc.blue('[ 调试 ]') + "这是登陆时的socket   " + socket.id);
-        console.log(clc.yellow('[ 调试 ]') +data.userid);
-        console.log(clc.yellow('[ 调试 ]') +data.password);
+        //console.log(clc.yellow('[ 调试 ]') + data.userId);
+        //console.log(clc.yellow('[ 调试 ]') + data.password);
         //先得到最大id，防止越界
         connection.query(
             'SELECT  max(user_id) from user_info',
@@ -263,71 +272,67 @@ function Myrtc() {
                 if (err) {
                     throw err;
                 }
-                // console.log("成功");
-                // console.log(results);
                 var maxid;
                 var id = results[0];
                 maxid = id['max(user_id)'];
-                if (data.userid <= maxid) {
-
-
+                if (data.userId <= maxid) {
+                    //验证是否重复登陆
+                    console.log(clc.blue("[ 调试 ]") + "验证：是否重复登陆");
+                    for(var i= 0;i<that.userId.length;i++){
+                        if(data.userId == that.userId[i]){
+                            //登陆失败
+                            socket.send(JSON.stringify({
+                                "eventName": "password",
+                                "data": {
+                                    "flag": 0
+                                }
+                            }), errorCb);
+                            console.log(clc.yellow("[ 警告 ]") + "登陆失败：重复登陆");
+                            //return;
+                        }
+                    }
+                    //不是重复登陆
                     //需要从数据库验证密码
+                    console.log(clc.blue("[ 调试 ]") + "不是重复登陆");
                     var userGetSql = 'SELECT * FROM user_info WHERE user_id=?';
-                    var userGetSql_Params = [data.userid];
-
+                    var userGetSql_Params = [data.userId];
                     connection.query(userGetSql, userGetSql_Params, function (err, result) {
                         if (err) {
                             console.log('[SELECT ERROR] - ', err.message);
                             return;
                         }
-
-                        console.log(clc.green('[ 消息 ]') + "id为" + data.userid + "的用户尝试登陆,他输入的密码" + data.password);
+                        console.log(clc.green('[ 消息 ]') + "id为" + data.userId + "的用户尝试登陆,他输入的密码" + data.password);
                         var res = result[0];
                         var password = res['user_key'];
-                        var username = res['user_name'];
-                        // console.log(res);
-                        // console.log('password is  '+password);
+                        var userName = res['user_name'];
+                        //验证密码
                         if (data.password == password) {
+                            //密码正确
                             //更新登陆状态
                             var userModSql = 'update user_info set user_status=1,user_socket=? where user_id=?';
-                            var userModSql_Params = [socket.id, data.userid];
+                            var userModSql_Params = [socket.id, data.userId];
                             connection.query(userModSql, userModSql_Params, function (err, result) {
                                 if (err) {
                                     console.log('[ADDUSER ERROR]-', err.message);
                                     return;
                                 }
-
+                                //将此用户的socket加入服务器全局变量中
+                                var strUserid = '' + data.userId;
+                                that.userId.push(maxid);
+                                that.userSockets[strUserid] = socket;
+                                console.log(clc.green('[ 消息 ]') + "id为" + data.userId + "的用户登陆成功");
+                                //给客户端发送登陆成功
+                                socket.send(JSON.stringify({
+                                    "eventName": "password",
+                                    "data": {
+                                        "flag": 1,
+                                        "userName": userName,
+                                        "userId":data.userId
+                                    }
+                                }), errorCb);
                             });
-                            //此时还需验证这个用户是否已经登陆
-                            // for (i = 0; i < socketUid.length; i++) {
-                            //     if (socketUid[i] == data.userid) {
-                            //         socket.emit('password', {
-                            //             flag: 0,
-                            //             username: username
-                            //         });
-                            //         console.log(clc.yellow("[ 警告 ]") + "登陆失败：重复登陆");
-                            //         return;
-                            //     }
-                            // }
-                            //这里记录下每个用户登陆的socket
-                            // socketId[socketId.length] = socket.id;
-                            // socketUid[socketUid.length] = data.userid;
-                            // console.log(socketId);
-                            // console.log(socketUid);
-
-                            // console.log("[ 消息 ]登陆成功");
-                            // socket.emit('password', {
-                            //     flag: 1,
-                            //     username: username
-                            // });
-                            socket.send(JSON.stringify({
-                                "eventName": "password",
-                                "data": {
-                                    "flag": 1,
-                                    "username": "gaoming"
-                                }
-                            }), errorCb);
                         } else {
+                            //登陆失败
                             socket.send(JSON.stringify({
                                 "eventName": "password",
                                 "data": {
@@ -336,36 +341,26 @@ function Myrtc() {
                             }), errorCb);
                             console.log(clc.yellow("[ 警告 ]") + "登陆失败：密码错误");
                         }
-
-                        //console.log('-----------------------------------------------------------------\n\n');
                     });
                 } else {
                     return;
                 }
             });
-        // socket.send(JSON.stringify({
-        //  "eventName": "__new",
-        //  "data": {
-        //      "name": "gaoming"
-        //  }
-        // }), errorCb);
-
     });
 
     // //获取好友分组，将好友分组发送给客户端
+    // 一般发生在登陆和修改分组之后
     this.on('getCategoryInfo', function (data, socket) {
         // console.log('[ 消息 ]'+' [ 获取分组 ]');
 
-        var userid = data.userid;
+        var userId = data.userId;
         // 从 数据库中 提取出 分组信息
-
-
         // 测试阶段，先不用组名，而是用该用户自己的ｎｉｃｋｎａｍｅ代替，后期改回ｃａｔｅｇｏｒｙ
 
 
-        console.log(clc.yellow('[ 调试 ]') +"userid " + data.userid);
+        console.log(clc.yellow('[ 调试 ]') + "userid " + data.userId);
         var userGetSql = 'select * from category_info where user_id=?';
-        var userGetSql_Params = [userid];
+        var userGetSql_Params = [userId];
         connection.query(userGetSql, userGetSql_Params, function (err, result) {
             if (err) {
                 console.log('[SELECT ERROR] - ', err.message);
@@ -381,16 +376,16 @@ function Myrtc() {
 
                         var cateid = res['category_id'];
                         var catename = res['category_name'];
-                        console.log(clc.yellow('[ 调试 ]') +"cateid" + cateid);
-                        console.log(clc.yellow('[ 调试 ]') +"catename" + catename);
+                        console.log(clc.yellow('[ 调试 ]') + "cateid" + cateid);
+                        console.log(clc.yellow('[ 调试 ]') + "catename" + catename);
                         catenameList[catenameList.length] = catename;
                         cateidList[cateidList.length] = cateid;
                         res = result[i + 1];
                     }).apply(this);
                 }
             }
-            console.log(clc.yellow('[ 调试 ]') +cateidList);
-            console.log(clc.yellow('[ 调试 ]') +catenameList);
+            //console.log(clc.yellow('[ 调试 ]') + cateidList);
+            //console.log(clc.yellow('[ 调试 ]') + catenameList);
             // var  user_id =  res['user_id'];
             // var cateid = [ "1","2","3","4"];
             // var catename = ["a","b","c","d"];
@@ -422,9 +417,8 @@ function Myrtc() {
 
     // 客户端 发起 好友请求
     this.on('__reqFriend', function (data, socket) {
+        var that = this;
         var soc = this.getSocket(data.socketId);
-
-
         //对应 好友 没上线或者没此好友的话返回错误
         var userModSql = 'select user_status from user_info where user_id=?';
         var userModSql_Params = [data.friend_id];
@@ -436,57 +430,35 @@ function Myrtc() {
             }
             var res = result[0];
 
+            //如果在线
             if (res) {
-                //将 好友请求 id 对应 的 socket 找到
-                var userModSql = 'select user_socket,user_name from user_info where user_id=?';
-                var userModSql_Params = [data.friend_id];
-                connection.query(userModSql, userModSql_Params, function (err, result) {
-                    if (err) {
-                        console.log('[ADDUSER ERROR]-', err.message);
-                        return;
+                that.userSockets[data.friend_id].send(JSON.stringify({
+                    "eventName": "_reqAddFriend",
+                    "data": {
+                        //"socketId": socket.id,
+                        "reqFriendId": data.userId,
+                        "reqFriendName":data.userName,
+                        "reqFriendMessage":data.reqFriendMessage
                     }
-                    var res = result[0];
+                }), errorCb);
 
-                    var friend_socket = res['user_socket'];
-                    var friend_name = res['user_name'];
-
-                    console.log(clc.yellow('[ 调试 ]') +"  添加好友时 调试  " + friend_socket);
-
-                   // 将 好友请求 发送给 相应的好友
-                    if (friend_socket) {
-                        soc.send(JSON.stringify({
-                            "eventName": "_reqAddFriend",
-                            "data": {
-                                "friend_id": data.friend_id,
-                                "friend_name": friend_name,
-                                "req_socket": soc
-                            }
-                        }), errorCb);
-                    }
-                });
-
-
-
-
+                //如果不在线
             } else {
                 //没有此好友
-                return;
+                //return;
             }
-
         });
-
-
     });
 
     //同意添加好友
     this.on('__addFriend', function (data, socket) {
-        var soc = this.getSocket(data.socketId);
-        var friend_socket = data.req_socket;
-
-
+        var that = this;
+        //var soc = this.getSocket(data.socketId);
+        //var friend_socket = data.req_socket;
+        //
         //将好友信息存入数据库
         var userModSql = 'insert into friend_info  set user_id  = ? ,friend_id = ?,friend_name=?,category_id=1';
-        var userModSql_Params = [data.user_id, data.friend_id, data.friend_name];
+        var userModSql_Params = [data.userId, data.reqFriendId, data.reqFriendName];
         connection.query(userModSql, userModSql_Params, function (err, result) {
             if (err) {
                 console.log('[ADDUSER ERROR]-', err.message);
@@ -494,22 +466,22 @@ function Myrtc() {
             }
         });
         var userModSql = 'insert into friend_info  set user_id  = ? ,friend_id = ?,friend_name=?,category_id=1';
-        var userModSql_Params = [data.friend_id, data.user_id, data.user_name];
+        var userModSql_Params = [data.reqFriendId, data.userId, data.userName];
         connection.query(userModSql, userModSql_Params, function (err, result) {
             if (err) {
                 console.log('[ADDUSER ERROR]-', err.message);
                 return;
             } else {
-                soc.send(JSON.stringify({
+                that.userSockets[data.userId].send(JSON.stringify({
                     "eventName": "_addFriend",
                     "data": {
                         "flag": 0 //通知被加好友添加好友成功
                     }
                 }), errorCb);
-                req_socket.send(JSON.stringify({
+                that.userSockets[data.reqFriendId].send(JSON.stringify({
                     "eventName": "_addFriend",
                     "data": {
-                        "flag": 0 //通知申请好友添加还有成功
+                        "flag": 0 //通知申请好友添加好友成功
                     }
                 }), errorCb);
             }
@@ -519,16 +491,15 @@ function Myrtc() {
 
     });
 
-
     //拒绝添加好友
     this.on('refuse_addFreiend', function (data, socket) {
-        var soc = this.getSocket(data.socketId);
-        var friend_socket = data.req_socket;
-
-        friend_socket.send(JSON.stringify({
+        //console.log(clc.blue('[ 调试 ]') + "请求发起者是" + data.reqFriendId);
+        //告诉发起请求者，请求被拒绝
+        this.userSockets[data.reqFriendId].send(JSON.stringify({
             "eventName": "refuse_addFreiend",
             "data": {
-                "friend_name": data.friend_name,
+                "friend_name": data.reqFriendName,
+                "friend_id":data.reqFriendId,
                 "flag": 0
             }
         }), errorCb);
@@ -537,8 +508,6 @@ function Myrtc() {
     //申请删除好友
     this.on('__delFriend', function (data, socket) {
         var soc = this.getSocket(data.socketId);
-
-
         //删除好友
         var userGetSql = 'delete  FROM friend_info WHERE  (user_id=? and friend_id=?) or (user_id=? and friend_id=?)';
         var userGetSql_Params = [data.user_id, data.friend_id, data.friend_id, data.user_id];
@@ -554,18 +523,13 @@ function Myrtc() {
                     }
                 }), errorCb);
             }
-
         });
-
-
     });
 
 
     //修改分组
     this.on('__alterCategory', function (data, socket) {
         var soc = this.getSocket(data.socketId);
-
-
         //对应 好友 没上线或者没此好友的话返回错误
         var userModSql = 'update  friend_info set  category_id=? where user_id=? and friend_id=?';
         var userModSql_Params = [data.category_id, data.user_id, data.friend_id];
@@ -970,15 +934,15 @@ app.get('/image/whiteboard.png', function (req, res) {
 });
 
 RTC.rtc.on('new_connect', function (socket) {
-    console.log(clc.green('[ 消息 ]') +'创建新连接');
+    console.log(clc.green('[ 消息 ]') + '创建新连接');
 });
 
 RTC.rtc.on('remove_peer', function (socketId) {
-    console.log(clc.green('[ 消息 ]') +socketId + "用户离开");
+    console.log(clc.green('[ 消息 ]') + socketId + "用户离开");
 });
 
 RTC.rtc.on('new_peer', function (socket, room) {
-    console.log(clc.green('[ 消息 ]') +"新用户" + socket.id + "加入房间" + room);
+    console.log(clc.green('[ 消息 ]') + "新用户" + socket.id + "加入房间" + room);
 });
 
 RTC.rtc.on('socket_message', function (socket, msg) {
@@ -986,17 +950,17 @@ RTC.rtc.on('socket_message', function (socket, msg) {
 });
 
 RTC.rtc.on('ice_candidate', function (socket, ice_candidate) {
-    console.log(clc.yellow('[ 调试 ]') +"接收到来自" + socket.id + "的ICE Candidate");
+    console.log(clc.yellow('[ 调试 ]') + "接收到来自" + socket.id + "的ICE Candidate");
 });
 
 RTC.rtc.on('offer', function (socket, offer) {
-    console.log(clc.yellow('[ 调试 ]') +"接收到来自" + socket.id + "的Offer");
+    console.log(clc.yellow('[ 调试 ]') + "接收到来自" + socket.id + "的Offer");
 });
 
 RTC.rtc.on('answer', function (socket, answer) {
-    console.log(clc.yellow('[ 调试 ]') +"接收到来自" + socket.id + "的Answer");
+    console.log(clc.yellow('[ 调试 ]') + "接收到来自" + socket.id + "的Answer");
 });
 
 RTC.rtc.on('error', function (error) {
-    console.log(clc.red('[ 错误 ]') +"发生错误：" + error.message);
+    console.log(clc.red('[ 错误 ]') + "发生错误：" + error.message);
 });
