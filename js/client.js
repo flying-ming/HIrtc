@@ -14,8 +14,8 @@ var MyRTC = function () {
     var friendChatPanels = {};
     //保存这个客户端的 userId
     var userId;
-    //保存这个哭护短的username
-    var userName
+    //保存这个客户端的username
+    var userName;
     var packetSize = 1000;
 
     /**********************************************************/
