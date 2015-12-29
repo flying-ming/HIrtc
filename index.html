@@ -292,7 +292,7 @@
                 <div class="tab-pane" id="panel3">
                     <div id="shipin" style="display: block">点击视频</div>
                     <div class="msgs" id="msgs"></div>
-                    <div class="modal-footer"  style="display: none">
+                    <div class="modal-footer" id="grouptalk"  style="display: none">
                         <table>
                             <tr>
                                 <td id="msgbox2">
@@ -481,7 +481,7 @@
     registerBtn.onclick = function (event) {
         //注册
         rtc.register();
-        rtc.getCategoryInfo();
+//        rtc.getCategoryInfo();
     };
     document.getElementById("re-registerPassword").onkeydown = function(e){
         e = e||event;
@@ -502,14 +502,15 @@
     videoBtn.onclick = function (event) {
         if(flag == 1) {
            // document.getElementById("chat-content_2").style.display = 'block';
-            document.getElementById("group_msg").style.display = 'block';
+            document.getElementById("msgs").style.display = 'block';
+            document.getElementById("grouptalk").style.display = 'block';
             document.getElementById("panel2").style.display = 'none';
             document.getElementById("panel1").style.display = 'none';
             document.getElementById("shipin").style.display = 'none';
             friend.onclick = function(event){
                 document.getElementById("panel1").style.display='block';
                 document.getElementById("panel2").style.display='none';
-    document.getElementById("panel3").style.display='none';
+                document.getElementById("panel3").style.display='none';
             };
 //            privatetalk.onclick = function(event){
 //                document.getElementById("panel2").style.display='block';
@@ -540,7 +541,7 @@
                 document.getElementById("panel2").style.display='none';
             };
           //  document.getElementById("chat-content_2").style.display = 'block';
-            document.getElementById("group_msg").style.display = 'block';
+            document.getElementById("msgs").style.display = 'block';
             document.getElementById("panel2").style.display = 'block';
             document.getElementById("panel1").style.display = 'none';
             document.getElementById("shipin").style.display = 'none';
