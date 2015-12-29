@@ -12,244 +12,220 @@
     <link rel="stylesheet" href="/css/bootstrap.min.css" media="screen" type="text/css"/>
     <script type="text/javascript" src="/js/jquery.js"></script>
     <script type="text/javascript" src="/js/jquery-ui.js"></script>
+    <script src="/js/myjs.js"></script>
+    <!--<script type="text/javascript" src="/js/jquery.js"></script>-->
+    <script type="text/javascript" src="/js/jquery-ui.js"></script>
     <script src="/js/bootstrap.js"></script>
     <script src="/js/myjs.js"></script>
+    <!--<script src='/js/jquery.js'></script>-->
     <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet"> -->
     <link href="/css/font-awesome.min.css" rel="stylesheet">
     <title>聊天室Demo</title>
-    <style type="text/css">
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            overflow-y: hidden;
-        }
+      <style type="text/css">
+    html,
+    body {
+        width: 100%;
+        height: 100%;
+	overflow-y: hidden;
+    }
 
-        #videos {
-            position: absolute;
-            left: 30%;
-            top: 0;
-            bottom: 0;
-            right: 0;
-            overflow: auto;
-        }
+    #videos {
+        position: absolute;
+        left: 30%;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        overflow: auto;
+    }
 
-        #videos video {
-            display: inline-block;
-            width: 32%;
-        }
+    #videos video {
+        display: inline-block;
+        width: 32%;
+    }
 
-        #side33 {
-            height: 100%;
-        }
+	#side33{height:100%;}
+	#main.col-md-12{height:100%;background-color: #fcf8e3;}
+	#main.col-md-9{height:100%;background-color: #fcf8e3;}
+	#sidebar.col-md-3{background-color: #c7ede9;}
+	#sidebar.col-md-3{height:100%;}
 
-        #main.col-md-12 {
-            height: 100%;
-            background-color: #fcf8e3;
-        }
 
-        #main.col-md-9 {
-            height: 100%;
-            background-color: #fcf8e3;
-        }
-
-        #sidebar.col-md-3 {
-            background-color: #c7ede9;
-        }
-
-        #sidebar.col-md-3 {
-            height: 100%;
-        }
-
-        #chat-content {
-            position: absolute;
-            top: 57px;
-            bottom: 72px;
-            overflow-y: auto;
-            right: 15px;
-            left: 0;
-        }
-
-        #panel2 .modal-footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            background: #31b0d5;
-            right: 15px;
-        }
-
-        #panel3 .modal-footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            background: #31b0d5;
-            right: 15px;
-        }
-
-        #msgbox {
-            width: 100%;
-            padding-right: 15px;
-        }
-
-        #msgbox2 {
-            width: 100%;
-            padding-right: 15px;
-        }
+	#chat-content {
+		position: absolute;
+		top: 57px;
+		bottom: 72px;
+		overflow-y: auto;
+		right: 15px;
+		left: 0;
+	}
+	#panel2 .modal-footer{
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		background: #31b0d5;
+		right: 15px;
+	}
+	#panel3 .modal-footer{
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		background: #31b0d5;
+		right: 15px;
+	}
+	#msgbox{
+	width:100%;
+	padding-right:15px;
+	}
+	#msgbox2{
+	width:100%;
+	padding-right:15px;
+	}
 
     </style>
     <script type="text/javascript">
-        $().ready(function () {
-            $('.img').jfade();
-            $('.button').jfade({
-                start_opacity: "1",
-                high_opacity: "1",
-                low_opacity: ".4",
-                timing: "500"
-            });
-            $('.text').jfade({
-                start_opacity: "1",
-                high_opacity: "1",
-                low_opacity: ".7",
-                timing: "500"
-            });
-            $('.links').jfade({
-                start_opacity: ".9",
-                high_opacity: "1",
-                low_opacity: ".2",
-                timing: "500"
-            });
+    $().ready(function() {
+        $('.img').jfade();
+        $('.button').jfade({
+            start_opacity: "1",
+            high_opacity: "1",
+            low_opacity: ".4",
+            timing: "500"
         });
+        $('.text').jfade({
+            start_opacity: "1",
+            high_opacity: "1",
+            low_opacity: ".7",
+            timing: "500"
+        });
+        $('.links').jfade({
+            start_opacity: ".9",
+            high_opacity: "1",
+            low_opacity: ".2",
+            timing: "500"
+        });
+    });
 
-        function renameFunction() {
-            // body...
+    function renameFunction () {
+        // body...
 
-        }
+    }
     </script>
 </head>
 
 <body class="container-fluid">
-<div class="login" id="loginbox" style="display:block;">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-6">
-                <form class="form-signin" role="form">
-                    <h2 class="form-login-heading">登陆</h2>
-                    <input type="text" class="form-control" placeholder="请输入账号" id="userId" name="userid" required
-                           autofocus>
-                    <input type="password" class="form-control" placeholder="请输入密码" id="password" name="password"
-                           required>
-                    <button class="btn btn-lg btn-primary btn-block" type="button" id="loginBtn">Login</button>
-                </form>
-            </div>
-            <div class="col-md-6">
-                <form class="form-signin" role="form">
-                    <h3 class="form-register-heading">还没账号？注册一个吧！</h3>
-                    <input type="text" class="form-control" placeholder="昵称" id="nickname" name="nickname" required
-                           autofocus>
-                    <input type="password" class="form-control" id="registerPassword" name="registerPassword"
-                           placeholder="密码" required>
-                    <input type="password" class="form-control" id="re-registerPassword" name="re-registerPassword"
-                           placeholder="确认密码" required autofocus>
-                    <button class="btn btn-lg btn-primary btn-block" type="button" id="registerBtn">Register</button>
-                </form>
+    <div class="login" id="loginbox" style="display:block;">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <form class="form-signin" role="form">
+                        <h2 class="form-login-heading">登陆</h2>
+                        <input type="text" class="form-control" placeholder="请输入账号" id="userId" name="userid" required autofocus>
+                        <input type="password" class="form-control" placeholder="请输入密码" id="password" name="password" required>
+                        <button class="btn btn-lg btn-primary btn-block" type="button" id="loginBtn">Login</button>
+                    </form>
+                </div>
+                <div class="col-md-6">
+                    <form class="form-signin" role="form">
+                        <h3 class="form-register-heading">还没账号？注册一个吧！</h3>
+                        <input type="text" class="form-control" placeholder="昵称" id="nickname" name="nickname" required autofocus>
+                        <input type="password" class="form-control" id="registerPassword" name="registerPassword" placeholder="密码" required>
+                        <input type="password" class="form-control" id="re-registerPassword" name="re-registerPassword" placeholder="确认密码" required autofocus>
+                        <button class="btn btn-lg btn-primary btn-block" type="button" id="registerBtn">Register</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<!--  <div id="chatBox" class="accordion"> -->
-<!--     <div class="container-fluid"> -->
-<div id="chatBox" class="container-fluid" style="display:none;">
-    <!--这是导航栏-->
-    <div class="row clearfix">
-        <div class="col-md-12 column">
-            <nav class="navbar navbar-default navbar-inverse navbar-fixed-top" role="navigation">
-                <div id="Menu" class="navbar-header">
-                    <button type="button" class="navbar-toggle" data-toggle="collapse"
-                            data-target="#bs-example-navbar-collapse-1"><span
-                            class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span
-                            class="icon-bar"></span><span class="icon-bar"></span></button>
-                    <a class="navbar-brand" style="font-size:30px; padding-top:20px;"
-                       href="javascript:location.reload()">爱会议</a>
-                </div>
-                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                    <ul class="nav navbar-nav">
-                    </ul>
-                    <ul class="nav navbar-nav navbar-right">
-                        <li>
-                            <div id="theme" class="theme">
-                                <span class="themetop">主题</span>
-                                <br>
-                                <span id="timer" class="themebottom"></span>
-                            </div>
-                        </li>
-                        <li>
-                            <div id="top1" class="img">
-                                <img class="imgtop" src="image/whiteboard.png" alt="白板">
-                                <span class="imgbottom">白板</span>
-                            </div>
-                        </li>
-                        <li>
-                            <div id="top2" class="img">
-                                <img id="videoBtn" class="imgtop" src="image/mic.png" alt="microphone">
-                                <span class="imgbottom">视频</span>
-                            </div>
-                        </li>
-                        <li>
-                            <div id="top3" class="img">
-                                <img class="imgtop" src="image/handup.png" alt="handup">
-                                <span class="imgbottom">举手</span>
-                            </div>
-                        </li>
-                        <li>
-                            <div id="top4" class="img">
-                                <a href="#modal-container-649826" role="button" data-toggle="modal">
-                                    <img class="imgtop" src="image/invite.png" alt="invite"/>
-                                    <span class="imgbottom">邀请</span>
-                                </a>
-                            </div>
-                        </li>
-                        <li>
-                            <div id="top5" class="img">
-                                <a href="#modal-container-exit" role="button" data-toggle="modal">
-                                    <img class="imgtop" src="image/exit.png" alt="exit">
-                                    <span class="imgbottom">退出</span>
-                                </a>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+    <!--  <div id="chatBox" class="accordion"> -->
+    <!--     <div class="container-fluid"> -->
+    <div id="chatBox" class="container-fluid" style="display:none;">
+        <!--这是导航栏-->
+        <div class="row clearfix">
+            <div class="col-md-12 column">
+                <nav class="navbar navbar-default navbar-inverse navbar-fixed-top" role="navigation">
+                    <div id="Menu" class="navbar-header">
+                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"><span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button>
+                       <a class="navbar-brand" style="font-size:30px; padding-top:20px;" href="javascript:location.reload()">爱会议</a>
+                    </div>
+                    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                        <ul class="nav navbar-nav">
+                        </ul>
+                        <ul class="nav navbar-nav navbar-right">
+                            <li>
+                                <div id="theme" class="theme">
+                                    <span class="themetop">主题</span>
+                                    <br>
+                                    <span id="timer" class="themebottom"></span>
+                                </div>
+                            </li>
+                            <li>
+                                <div id="top1" class="img">
+                                    <img class="imgtop" src="image/whiteboard.png" alt="白板">
+                                    <span class="imgbottom">白板</span>
+                                </div>
+                            </li>
+                            <li>
+                                <div id="top2" class="img">
+                                    <img id="videoBtn" class="imgtop" src="image/mic.png" alt="microphone">
+                                    <span class="imgbottom">视频</span>
+                                </div>
+                            </li>
+                            <li>
+                                <div id="top3" class="img">
+                                    <img class="imgtop" src="image/handup.png" alt="handup">
+                                    <span class="imgbottom">举手</span>
+                                </div>
+                            </li>
+                            <li>
+                                <div id="top4" class="img">
+                                    <a href="#modal-container-649826" role="button" data-toggle="modal">
+                                        <img class="imgtop" src="image/invite.png" alt="invite" />
+                                        <span class="imgbottom">邀请</span>
+                                    </a>
+                                </div>
+                            </li>
+                            <li>
+                                <div id="top5" class="img">
+                                    <a href="#modal-container-exit" role="button" data-toggle="modal">
+                                        <img class="imgtop" src="image/exit.png" alt="exit">
+                                        <span class="imgbottom">退出</span>
+                                    </a>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
         </div>
     </div>
-</div>
-<div class="row" id="side33" style="display:none;">
-    <!--侧边栏-->
-    <div id="sidebar" class="col-md-3 hide">
-        <div id="sign2" class="leftsign"><img src="image/left.png"/></div>
-        <div class="leftbody">
-            <ul class="nav nav-tabs" style="width: 100%">
-                <li class="active" style="width:33.33333333%; text-align: center; ">
-                    <a href="#panel1" data-toggle="tab">
-                        <img style="width:35px;height: 35px" src="image/friends.png">
-                    </a>
-                </li>
-                <li style="width:33.333333333%; text-align: center; ">
-                    <a href="#panel2 " data-toggle="tab">
-                        <img style="width:35px;height: 35px" src="image/session.png">
-                    </a>
-                </li>
-                <li style="width:33.33333333%; text-align: center;">
-                    <a href="#panel3" data-toggle="tab">
-                        <img style="width:35px;height: 35px" src="image/grouptalk.png">
-                    </a>
-                </li>
-            </ul>
-            <div class="tab-content">
-                <div class="tab-pane active" id="panel1">
-                    <!--好友列表-->
-                    <ul id="accordion" class="accordion">
-                    </ul>
-                    <div class="container-fluid" style="width:100%;">
+    <div class="row" id="side33" style="display:none;">
+        <!--侧边栏-->
+        <div id="sidebar" class="col-md-3 hide">
+            <div id="sign2" class="leftsign"><img src="image/left.png" /></div>
+            <div class="leftbody">
+                <ul class="nav nav-tabs" style="width: 100%">
+                    <li class="active" style="width:33.33333333%; text-align: center; ">
+                        <a href="#panel1" data-toggle="tab">
+                            <img style="width:35px;height: 35px" src="image/friends.png">
+                        </a>
+                    </li>
+                    <li style="width:33.333333333%; text-align: center; ">
+                        <a href="#panel2 " data-toggle="tab">
+                            <img style="width:35px;height: 35px" src="image/session.png">
+                        </a>
+                    </li>
+                    <li style="width:33.33333333%; text-align: center;">
+                        <a href="#panel3" data-toggle="tab">
+                            <img style="width:35px;height: 35px" src="image/grouptalk.png">
+                        </a>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane active" id="panel1">
+                        <!--好友列表-->
+                        <ul id="accordion" class="accordion">
+                        </ul>
+                        <div class="container-fluid" style="width:100%;">
 
                         <div class="col-xs-4 col-md-4">
                             <button type="button" class="btn btn-default" data-dismiss="modal" id="renamebtn">重命名
@@ -273,43 +249,6 @@
                 <div class="tab-pane" id="panel2">
                     <div id="chat-content">
                         <div>私聊</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
                     </div>
                     <div class="modal-footer">
                         <input type="file" id="fileIpt" style="position:absolute">
@@ -329,53 +268,17 @@
                 <!--群聊-->
 
                 <div class="tab-pane" id="panel3">
-                    <div id="chat-content">
+                    <div class="msgs" id="msgs">
                         <div>群聊</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
-                        <div>23e23</div>
                         <div>23e23</div>
                     </div>
                     <div class="modal-footer">
                         <table>
                             <tr>
                                 <td id="msgbox2">
-                                    <input type="text" style="width:100%;height:100%"/></td>
+                                    <input type="text" id="msgIpt" class="msgIpt" style="width:100%;height:100%"/></td>
                                 <td>
-                                    <button type="button" class="btn btn-primary" data-dismiss="modal">发送</button>
+                                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="sendBtn" class="sendBtn">发送</button>
                                 </td>
                             </tr>
                         </table>
@@ -557,25 +460,25 @@
     //     alert("1");
     // };
 
-    videoBtn.onclick = function (event) {
-        rtc.createStream({
-            "video": true,
-            "audio": true
-        });
-        // alert("1");
-    };
+ videoBtn.onclick = function(event) {
+     rtc.createStream({
+         "video": true,
+         "audio": true
+     });
+     // alert("1");
+ };
 
 
-    // sendBtn.onclick = function(event) {
-    //     var msgIpt = document.getElementById("msgIpt"),
-    //         msg = msgIpt.value,
-    //         p = document.createElement("p");
-    //     p.innerText = "me: " + msg;
-    //     //广播消息
-    //     rtc.broadcast(msg);
-    //     msgIpt.value = "";
-    //     msgs.appendChild(p);
-    // };
+     sendBtn.onclick = function(event) {
+         var msgIpt = document.getElementById("msgIpt"),
+             msg = msgIpt.value,
+             p = document.createElement("p");
+         p.innerText = "me: " + msg;
+         //广播消息
+         rtc.broadcast(msg);
+         msgIpt.value = "";
+         msgs.appendChild(p);
+     };
 
     // sendFileBtn.onclick = function(event) {
     //     //分享文件
@@ -585,107 +488,107 @@
 
 
 
-    //对方同意接收文件
-    rtc.on("send_file_accepted", function (sendId, socketId, file) {
-        var p = document.getElementById("sf-" + sendId);
-        p.innerText = "对方接收" + file.name + "文件，等待发送";
+//对方同意接收文件
+rtc.on("send_file_accepted", function(sendId, socketId, file) {
+    var p = document.getElementById("sf-" + sendId);
+    p.innerText = "对方接收" + file.name + "文件，等待发送";
 
-    });
-    //对方拒绝接收文件
-    rtc.on("send_file_refused", function (sendId, socketId, file) {
-        var p = document.getElementById("sf-" + sendId);
-        p.innerText = "对方拒绝接收" + file.name + "文件";
-    });
-    //请求发送文件
-    rtc.on('send_file', function (sendId, socketId, file) {
-        var p = document.createElement("p");
-        p.innerText = "请求发送" + file.name + "文件";
-        p.id = "sf-" + sendId;
+});
+//对方拒绝接收文件
+rtc.on("send_file_refused", function(sendId, socketId, file) {
+    var p = document.getElementById("sf-" + sendId);
+    p.innerText = "对方拒绝接收" + file.name + "文件";
+});
+//请求发送文件
+rtc.on('send_file', function(sendId, socketId, file) {
+    var p = document.createElement("p");
+    p.innerText = "请求发送" + file.name + "文件";
+    p.id = "sf-" + sendId;
+    files.appendChild(p);
+});
+//文件发送成功
+rtc.on('sended_file', function(sendId, socketId, file) {
+    var p = document.getElementById("sf-" + sendId);
+    p.parentNode.removeChild(p);
+});
+//发送文件碎片
+rtc.on('send_file_chunk', function(sendId, socketId, percent, file) {
+    var p = document.getElementById("sf-" + sendId);
+    p.innerText = file.name + "文件正在发送: " + Math.ceil(percent) + "%";
+});
+//接受文件碎片
+rtc.on('receive_file_chunk', function(sendId, socketId, fileName, percent) {
+    var p = document.getElementById("rf-" + sendId);
+    p.innerText = "正在接收" + fileName + "文件：" + Math.ceil(percent) + "%";
+});
+//接收到文件
+rtc.on('receive_file', function(sendId, socketId, name) {
+    var p = document.getElementById("rf-" + sendId);
+    p.parentNode.removeChild(p);
+});
+//发送文件时出现错误
+rtc.on('send_file_error', function(error) {
+    console.log(error);
+});
+//接收文件时出现错误
+rtc.on('receive_file_error', function(error) {
+    console.log(error);
+});
+//接受到文件发送请求
+rtc.on('receive_file_ask', function(sendId, socketId, fileName, fileSize) {
+    var p;
+    if (window.confirm(socketId + "用户想要给你传送" + fileName + "文件，大小" + fileSize + "KB,是否接受？")) {
+        rtc.sendFileAccept(sendId);
+        p = document.createElement("p");
+        p.innerText = "准备接收" + fileName + "文件";
+        p.id = "rf-" + sendId;
         files.appendChild(p);
-    });
-    //文件发送成功
-    rtc.on('sended_file', function (sendId, socketId, file) {
-        var p = document.getElementById("sf-" + sendId);
-        p.parentNode.removeChild(p);
-    });
-    //发送文件碎片
-    rtc.on('send_file_chunk', function (sendId, socketId, percent, file) {
-        var p = document.getElementById("sf-" + sendId);
-        p.innerText = file.name + "文件正在发送: " + Math.ceil(percent) + "%";
-    });
-    //接受文件碎片
-    rtc.on('receive_file_chunk', function (sendId, socketId, fileName, percent) {
-        var p = document.getElementById("rf-" + sendId);
-        p.innerText = "正在接收" + fileName + "文件：" + Math.ceil(percent) + "%";
-    });
-    //接收到文件
-    rtc.on('receive_file', function (sendId, socketId, name) {
-        var p = document.getElementById("rf-" + sendId);
-        p.parentNode.removeChild(p);
-    });
-    //发送文件时出现错误
-    rtc.on('send_file_error', function (error) {
-        console.log(error);
-    });
-    //接收文件时出现错误
-    rtc.on('receive_file_error', function (error) {
-        console.log(error);
-    });
-    //接受到文件发送请求
-    rtc.on('receive_file_ask', function (sendId, socketId, fileName, fileSize) {
-        var p;
-        if (window.confirm(socketId + "用户想要给你传送" + fileName + "文件，大小" + fileSize + "KB,是否接受？")) {
-            rtc.sendFileAccept(sendId);
-            p = document.createElement("p");
-            p.innerText = "准备接收" + fileName + "文件";
-            p.id = "rf-" + sendId;
-            files.appendChild(p);
-        } else {
-            rtc.sendFileRefuse(sendId);
-        }
-    });
-    //成功创建WebSocket连接
-    rtc.on("connected", function (socket) {
-        //创建本地视频流
-        // rtc.createStream({
-        //   "video": true,
-        //   "audio": true
-        // });
-    });
+    } else {
+        rtc.sendFileRefuse(sendId);
+    }
+});
+//成功创建WebSocket连接
+rtc.on("connected", function(socket) {
+    //创建本地视频流
+    // rtc.createStream({
+    //   "video": true,
+    //   "audio": true
+    // });
+});
 
-    //创建本地视频流成功
-    rtc.on("stream_created", function (stream) {
-        document.getElementById('me').src = URL.createObjectURL(stream);
-        document.getElementById('me').play();
-    });
-    //创建本地视频流失败
-    rtc.on("stream_create_error", function () {
-        alert("create stream failed!");
-    });
-    //接收到其他用户的视频流
-    rtc.on('pc_add_stream', function (stream, socketId) {
-        var newVideo = document.createElement("video"),
-                id = "other-" + socketId;
-        newVideo.setAttribute("class", "other");
-        newVideo.setAttribute("autoplay", "autoplay");
-        newVideo.setAttribute("id", id);
-        videos.appendChild(newVideo);
-        rtc.attachStream(stream, id);
-    });
-    //删除其他用户
-    rtc.on('remove_peer', function (socketId) {
-        var video = document.getElementById('other-' + socketId);
-        if (video) {
-            video.parentNode.removeChild(video);
-        }
-    });
-    //接收到文字信息
-    rtc.on('data_channel_message', function (channel, socketId, message) {
-        var p = document.createElement("p");
-        p.innerText = socketId + ": " + message;
-        msgs.appendChild(p);
-    });
-    //连接WebSocket服务器
-    rtc.connect("wss:" + window.location.href.substring(window.location.protocol.length).split('#')[0], window.location.hash.slice(1));
+//创建本地视频流成功
+rtc.on("stream_created", function(stream) {
+    document.getElementById('me').src = URL.createObjectURL(stream);
+    document.getElementById('me').play();
+});
+//创建本地视频流失败
+rtc.on("stream_create_error", function() {
+    alert("create stream failed!");
+});
+//接收到其他用户的视频流
+rtc.on('pc_add_stream', function(stream, socketId) {
+    var newVideo = document.createElement("video"),
+        id = "other-" + socketId;
+    newVideo.setAttribute("class", "other");
+    newVideo.setAttribute("autoplay", "autoplay");
+    newVideo.setAttribute("id", id);
+    videos.appendChild(newVideo);
+    rtc.attachStream(stream, id);
+});
+//删除其他用户
+rtc.on('remove_peer', function(socketId) {
+    var video = document.getElementById('other-' + socketId);
+    if (video) {
+        video.parentNode.removeChild(video);
+    }
+});
+//接收到文字信息
+rtc.on('data_channel_message', function(channel, socketId, message) {
+    var p = document.createElement("p");
+    p.innerText = socketId + ": " + message;
+    msgs.appendChild(p);
+});
+//连接WebSocket服务器
+rtc.connect("wss:" + window.location.href.substring(window.location.protocol.length).split('#')[0], window.location.hash.slice(1));
 </script>
 </html>

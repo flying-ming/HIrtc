@@ -297,8 +297,12 @@ var MyRTC = function () {
 
         /*******************验证好友************************/
         this.on('_reqAddFriend', function (data) {
+            alert("收到好友请求");
+            if(data.flag == 1){
+                alert("请求好友错误");
+                return;
+            }
             //var that = this;
-            //alert("收到好友请求");
             //var addfriend_id = data.reqFriendid;
             //var addfriend_name = data.friend_name;
             //var soc = this.getSocket(data.socketId);
@@ -306,8 +310,6 @@ var MyRTC = function () {
             $('#friendapplication').modal('show');
             var modal = $('#friendapplication');
             modal.find('.friendinfo').text('id为'+data.reqFriendId+ '名字为'+data.reqFriendName+'的好友请求添加你为好友！'+'验证消息为：'+data.reqFriendMessage);
-
-
             //var result = confirm("id为"+data.reqFriendId + '名字为'+data.reqFriendName+'的好友请求添加你为好友！'+"验证消息为："+data.reqFriendMessage);
             //同意 ,0为同意 ，1 为拒绝
             modal.find(".btn.btn-default").get(0).onclick = function(){

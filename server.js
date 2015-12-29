@@ -554,6 +554,7 @@ function Myrtc() {
         var that = this;
         //如果添加自己为好友，返回错误
         if(data.userId == data.friend_id) {
+            console.log(clc.red('[ 错误 ]') + "添加自己为好友");
             that.userSockets[data.userId].send(JSON.stringify({
                 "eventName":"_reqAddFriend",
                 "data":{
@@ -567,16 +568,18 @@ function Myrtc() {
         //console.log("  添加好友时" + userModSql_Params);
         connection.query(userModSql, userModSql_Params, function (err, result) {
             if (err) {
+                console.log(clc.red('[ 错误 ]') + "好友不在线");
                 console.log('[ADDUSER ERROR]-', err.message);
                 return;
             }
-            var res = result[0];
-            //如果已经是好友，返回错误
+            var res = result[0]['user_status'];
+            //如果已经是好友，返回错误  没写
             //如果在线
             if (res) {
                 that.userSockets[data.friend_id].send(JSON.stringify({
                     "eventName": "_reqAddFriend",
                     "data": {
+                        "flag":0,
                         //"socketId": socket.id,
                         "reqFriendId": data.userId,
                         "reqFriendName": data.userName,
@@ -586,11 +589,11 @@ function Myrtc() {
 
                 //如果不在线
             } else {
-                //没有此好友
+                //没有此好友 或者 好友不在线
                 that.userSockets[data.userId].send(JSON.stringify({
                     "eventName":"_reqAddFriend",
                     "data":{
-                        flag:1
+                        "flag":1
                     }
                 }),errorCb);
             }
