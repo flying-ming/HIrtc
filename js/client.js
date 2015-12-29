@@ -433,7 +433,7 @@ var MyRTC = function () {
         var userName = document.getElementById("nickname").value;
         var password = document.getElementById("registerPassword").value;
         var re_password = document.getElementById("re-registerPassword").value;
-        if(username =="" || password == "" || re_password==""){
+        if(userName =="" || password == "" || re_password==""){
             alert("请输入内容！");
             return;
         }
