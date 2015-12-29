@@ -67,9 +67,11 @@ var MyRTC = function () {
         //本地socket的id，由后台服务器创建
         this.me = null;
         //保存所有已登录的群成员的 peer connection,键为socket id，值为PeerConnection类型
-        this.groupPeerConnections = {};
+        //this.groupPeerConnections = {};
         //保存所有与本地相连的peer connection， 键为socket id，值为PeerConnection类型
         this.peerConnections = {};
+        //保存所有与本地连接的群成员socket的id
+        this.groupConnections = [];
         //保存所有与本地连接的socket的id
         this.connections = [];
         //初始时需要构建链接的数目
@@ -105,12 +107,6 @@ var MyRTC = function () {
                 }
             }));
             that.emit("socket_opened", socket);
-            socket.send(JSON.stringify({
-                "eventName": "__new",
-                "data": {
-                    "name": "gaoming"
-                }
-            }));
         };
 
         socket.onmessage = function (message) {
@@ -126,6 +122,7 @@ var MyRTC = function () {
             that.emit("socket_error", error, socket);
         };
 
+        //这个socket关闭的时候
         socket.onclose = function (data) {
             that.localMediaStream.close();
             var pcs = that.peerConnections;
@@ -138,6 +135,13 @@ var MyRTC = function () {
             that.connections = [];
             that.fileData = {};
             that.emit('socket_closed', socket);
+            socket.send(JSON.stringify({
+                "eventName": "__close",
+                "data": {
+                    "socket": socket,
+                    "userid": userId
+                }
+            }));
         };
 
         this.on('__new', function (data) {
@@ -148,7 +152,10 @@ var MyRTC = function () {
         this.on('_peers', function (data) {
             //获取所有服务器上的socketid
             that.connections = data.connections;
+            //将服务器上所有group成员socketid保存下来
+            //that.groupConnections = data.groupConnections;
             that.me = data.you;
+            //?????/
             that.emit("get_peers", that.connections);
             that.emit('connected', socket);
         });
@@ -161,8 +168,10 @@ var MyRTC = function () {
         });
 
         //有新用户 连接服务器 把他加入 connections中保存
+        //有好友的群成员连接服务器的话 把他加入 groupConnections中保存
         this.on('_new_peer', function (data) {
             that.connections.push(data.socketId);
+            //that.groupConnections.push(data.socketId);
             var pc = that.createPeerConnection(data.socketId),
                 i, m;
             pc.addStream(that.localMediaStream);
@@ -218,8 +227,9 @@ var MyRTC = function () {
                 document.getElementById("side33").style.display = 'block';
                 document.getElementById("sign1").style.display = 'block';
                 // this.getCategoryInfo();
-            } else
+            } else {
                 alert('denglu shibai');
+            }
         });
 
         this.on('register', function (data) {
@@ -324,19 +334,24 @@ var MyRTC = function () {
 
         /*******************验证好友************************/
         this.on('_reqAddFriend', function (data) {
-            //alert("收到好友请求");
+            alert("收到好友请求");
+            if(data.flag == 1){
+                alert("请求好友错误");
+                return;
+            }
+            //var that = this;
             //var addfriend_id = data.reqFriendid;
             //var addfriend_name = data.friend_name;
             //var soc = this.getSocket(data.socketId);
             //同意添加   不同意添加
             $('#friendapplication').modal('show');
             var modal = $('#friendapplication');
-            modal.find('.friendinfo').text('id为' + data.reqFriendId + '名字为' + data.reqFriendName + '的好友请求添加你为好友！' + '验证消息为：' + data.reqFriendMessage);
-
-
+            modal.find('.friendinfo').text('id为'+data.reqFriendId+ '名字为'+data.reqFriendName+'的好友请求添加你为好友！'+'验证消息为：'+data.reqFriendMessage);
             //var result = confirm("id为"+data.reqFriendId + '名字为'+data.reqFriendName+'的好友请求添加你为好友！'+"验证消息为："+data.reqFriendMessage);
             //同意 ,0为同意 ，1 为拒绝
-            document.getElementsByClassName("btn btn-default").onclick = function () {
+            modal.find(".btn.btn-default").get(0).onclick = function(){
+                //alert("default");
+                //发送给服务端修改friend_info表
                 that.socket.send(JSON.stringify({
                     "eventName": "refuse_addFreiend",
                     "data": {
@@ -348,7 +363,8 @@ var MyRTC = function () {
                     }
                 }))
             };
-            document.getElementsByClassName("btn btn-primary").onclick = function () {
+            modal.find(".btn.btn-primary").get(0).onclick = function(){
+                //alert("primary");
                 that.socket.send(JSON.stringify({
                     "eventName": "__addFriend",
                     "data": {
@@ -446,12 +462,12 @@ var MyRTC = function () {
             }
         }));
     };
-    /*************************添加好友*****************************/
+    /*************************添加好友的申请*****************************/
     myrtc.prototype.reqfriend = function () {
         var that = this;
         var addfriend_id = document.getElementById("addfriend_id").value;
         var addfriend_text = document.getElementById("addfriend_text").value;
-        alert(addfriend_id);
+        //alert(addfriend_id);
         that.socket.send(JSON.stringify({
             "eventName": "__reqFriend",
             "data": {
@@ -477,10 +493,6 @@ var MyRTC = function () {
         }));
     };
 
-    /************聊天**************************/
-    myrtc.prototype.msg = function(){
-        return ;
-    }
 
     /*************************流处理部分*******************************/
 
@@ -655,11 +667,9 @@ var MyRTC = function () {
 
         //消息广播
     myrtc.prototype.broadcast = function (message) {
-       // alert("msgtest");
         var socketId;
         for (socketId in this.dataChannels) {
             this.sendMessage(message, socketId);
-            //alert(socketId);
         }
     };
 
