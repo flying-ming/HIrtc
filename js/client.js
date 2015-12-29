@@ -236,6 +236,13 @@ var MyRTC = function () {
             userId = data.userId;
             userName = data.userName;
             alert("注册成功！！" + "\n" + data.userId + "是你的用户id，下次登陆需要用到，务必记住哦，开始聊天把!");
+            that.socket.send(JSON.stringify({
+                "eventName": "__login",
+                "data": {
+                    "userId": userId,
+                    "password": password
+                }
+            }));
             //document.getElementById("loginbox").style.display = 'none';
             //document.getElementById("chatBox").style.display = 'block';
             //document.getElementById("side33").style.display = 'block';
