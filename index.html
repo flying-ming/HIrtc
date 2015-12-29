@@ -470,11 +470,26 @@
         rtc.getCategoryInfo();
 
     };
+    //回车键提交密码
+    document.getElementById("password").onkeydown = function(e){
+        e = e||event;
+        if(e.keyCode === 13) {
+            rtc.clientLogin();
+            rtc.getCategoryInfo();
+        }
+    }
     registerBtn.onclick = function (event) {
         //注册
         rtc.register();
         rtc.getCategoryInfo();
     };
+    document.getElementById("re-registerPassword").onkeydown = function(e){
+        e = e||event;
+        if(e.keyCode === 13) {
+            rtc.register();
+            rtc.getCategoryInfo();
+        }
+    }
     addFriendBtn.onclick = function (event) {
         //
         rtc.reqfriend();
