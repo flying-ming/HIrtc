@@ -451,7 +451,7 @@ var MyRTC = function () {
         that.socket.send(JSON.stringify({
             "eventName": "_register",
             "data": {
-                "username": userName,
+                "userName": userName,
                 "password": password
             }
         }));
