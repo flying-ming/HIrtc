@@ -11,7 +11,7 @@ var SQL_TABLE = 'user_info';
 var connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '1234',
+    password: 'ms888nnn',
     port: '3306'
 });
 
@@ -231,7 +231,7 @@ function Myrtc() {
         var SQL_TABLE = 'user_info';
         var userModSql = 'INSERT INTO' + '  ' + SQL_TABLE + ' ' + 'SET user_name=?,user_key =?,user_status=0';
         var userModSql_Params = [data.userName, data.password];
-        console.log(clc.green('[ 消息 ]') + "注册" + data.userName + data.password);
+        console.log(clc.green('[ 消息 ]') + "进入注册事件,用户名为:" + data.userName +"密码为："+ data.password);
         connection.query(userModSql, userModSql_Params, function (err, result) {
             if (err) {
                 console.log(clc.red('[ 错误 ]') + '[ADDUSER ERROR]-', err.message);
@@ -245,12 +245,11 @@ function Myrtc() {
                         throw err;
                     }
                     // console.log("[ 消息 ]注册成功");
-                    console.log(clc.blue('[ 调试 ]') + results);
                     //这里得到最大的id
                     var maxid;
                     var id = results[0];
                     maxid = id['max(user_id)'];
-                    console.log(clc.green('[ 消息 ]') + maxid + "注册成功");
+                    console.log(clc.green('[ 消息 ]')+"id为" + maxid + "的用户注册成功");
                     //更新登陆状态 记录为在线
                     var userModSql = 'update user_info set user_status=1,user_socket=? where user_id=?';
                     var userModSql_Params = [socket.id, maxid];
@@ -259,6 +258,7 @@ function Myrtc() {
                             console.log(clc.red('[ 错误 ]' + ':更新状态'), err.message);
                             return;
                         }
+
                         //创建默认分组
                         var userGetSql = 'insert into category_info set  category_name=? ,user_id=?,category_id=?';
                         var userGetSql_Params = ["myFriend", maxid, "1"];
@@ -267,6 +267,7 @@ function Myrtc() {
                                 console.log(clc.red('[ 错误 ]' + ':创建默认分组'), err.message);
                                 return;
                             }
+                            console.log(clc.green('[ 消息 ]')+"id为" + maxid + "的用户注册成功,创建默认分组成功");
                         });
                         //创建默认会议群
                         //将此用户的socket加入服务器全局变量中
@@ -496,57 +497,68 @@ function Myrtc() {
 
     // //获取好友分组，将好友分组发送给客户端
     // 一般发生在登陆和修改分组之后
-    //this.on('getCategoryInfo', function (data, socket) {
-    //    // console.log('[ 消息 ]'+' [ 获取分组 ]');
-    //    // 从 数据库中 提取出 分组信息
-    //    console.log(clc.blue('[ 调试 ]') + "userid为" + data.userId + "的用户获取好友列表");
-    //    // 从category_info表里面找出组id和组名
-    //    var userGetSql = 'select * from category_info where user_id=? and ';
-    //    var userGetSql_Params = [data.userId,1];
-    //    connection.query(userGetSql, userGetSql_Params, function (err, result) {
-    //        if (err) {
-    //            console.log('[SELECT ERROR] - ', err.message);
-    //            return;
-    //        }
-    //        console.log(clc.blue('[ 调试 ]') + "申请好友列表时的result为" + result);
-    //        var res = result[0];
-    //        var catenameList = res['category_name'];
-    //        //目前项目默认分组id为1
-    //        var cateidList = res['category_id'];
-    //        //从friend_info表中找出对应组id的好友
-    //        //var userid = socket.name;
-    //        var groups = [];
-    //        var currentGroup;
-    //        //for(var cli = 0;cli<)
-    //        var userGetSql = 'select * from friend_info  where user_id=? and category_id=?';
-    //        var userGetSql_Params = [data.userId, "1"];
-    //        connection.query(userGetSql, userGetSql_Params, function (err, result) {
-    //            if (err) {
-    //                console.log('[SELECT ERROR] - ', err.message);
-    //                return;
-    //            }
-    //            var i;
-    //            res = result[0];
-    //            var friendIdList = res['friend_id'];
-    //            var friendNameList = res['friend_name'];
-    //            currentGroup={
-    //                groupId:cateidList,
-    //                groupName:catenameList,
-    //                friends:[]
-    //            };
-    //            for(i=0;i<friendIdList.length;i++){
-    //                currentGroup.friends.push({id:friendIdList[i],name:friendNameList[i]});
-    //            }
-    //            groups.push(currentGroup);
-    //            socket.send(JSON.stringify({
-    //                "eventName": "showCategory",
-    //                "data": {
-    //                    "groups":groups
-    //                }
-    //            }), errorCb);
-    //        });
-    //    });
-    //});
+    this.on('getCategoryInfo', function (data, socket) {
+        // console.log('[ 消息 ]'+' [ 获取分组 ]');
+        // 从 数据库中 提取出 分组信息
+        console.log(clc.blue('[ 调试 ]') + "userid为" + data.userId + "的用户获取好友列表");
+        // 从category_info表里面找出组id和组名
+        var userGetSql = 'select * from category_info where user_id=? and category_id=?';
+        var userGetSql_Params = [data.userId,"1"];
+        connection.query(userGetSql, userGetSql_Params, function (err, result) {
+            if (err) {
+                console.log('[SELECT ERROR] - ', err.message);
+                return;
+            }
+            console.log(clc.blue('[ 调试 ]') + "申请好友列表时的result为" + result);
+            var res = result[0];
+            var catenameList = res['category_name'];
+            //目前项目默认分组id为1
+            var cateidList = res['category_id'];
+            //从friend_info表中找出对应组id的好友
+            //var userid = socket.name;
+            var groups = [];
+            var currentGroup;
+            //for(var cli = 0;cli<)
+            var userGetSql = 'select * from friend_info  where user_id=? and category_id=?';
+            var userGetSql_Params = [data.userId, "1"];
+            connection.query(userGetSql, userGetSql_Params, function (err, result) {
+                if (err) {
+                    console.log('[SELECT ERROR] - ', err.message);
+                    return;
+                }
+                var i;
+                res = result[0];
+                currentGroup={
+                    groupId:cateidList,
+                    groupName:catenameList,
+                    friends:[]
+                };
+                //假如 res 为undefined 直接返回
+                if( res == undefined){
+                    groups.push(currentGroup);
+                    socket.send(JSON.stringify({
+                        "eventName": "showCategory",
+                        "data": {
+                            "groups":groups
+                        }
+                    }), errorCb);
+                    return;
+                }
+                var friendIdList = res['friend_id'];
+                var friendNameList = res['friend_name'];
+                for(i=0;i<friendIdList.length;i++){
+                    currentGroup.friends.push({id:friendIdList[i],name:friendNameList[i]});
+                }
+                groups.push(currentGroup);
+                socket.send(JSON.stringify({
+                    "eventName": "showCategory",
+                    "data": {
+                        "groups":groups
+                    }
+                }), errorCb);
+            });
+        });
+    });
 
 
     // 客户端 发起 好友请求
