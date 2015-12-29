@@ -70,6 +70,8 @@ var MyRTC = function () {
         //this.groupPeerConnections = {};
         //保存所有与本地相连的peer connection， 键为socket id，值为PeerConnection类型
         this.peerConnections = {};
+        //保存所有与本地相连的peer connection， 键为socket id，值为userName类型
+        this.peerConnectionsName = {};
         //保存所有与本地连接的群成员socket的id
         this.groupConnections = [];
         //保存所有与本地连接的socket的id
@@ -130,6 +132,7 @@ var MyRTC = function () {
                 that.closePeerConnection(pcs[i]);
             }
             that.peerConnections = [];
+            that.peerConnectionsName = {};
             that.dataChannels = {};
             that.fileChannels = {};
             that.connections = [];
@@ -144,13 +147,13 @@ var MyRTC = function () {
             }));
         };
 
-        this.on('__new', function (data) {
-            //获取所有服务器上的
-            alert(data.name);
-        });
+        //this.on('__new', function (data) {
+        //    //获取所有服务器上的
+        //    alert(data.name);
+        //});
 
         this.on('_peers', function (data) {
-            //获取所有服务器上的socketid
+            //获取服务器上所有的socketid
             that.connections = data.connections;
             //将服务器上所有group成员socketid保存下来
             //that.groupConnections = data.groupConnections;
@@ -183,6 +186,7 @@ var MyRTC = function () {
             var sendId;
             that.closePeerConnection(that.peerConnections[data.socketId]);
             delete that.peerConnections[data.socketId];
+            delete that.peerConnectionsName[data.socketId];
             delete that.dataChannels[data.socketId];
             for (sendId in that.fileChannels[data.socketId]) {
                 that.emit("send_file_error", new Error("Connection has been closed"), data.socketId, sendId, that.fileChannels[data.socketId][sendId].file);
@@ -220,7 +224,7 @@ var MyRTC = function () {
         this.on('password', function (data) {
             //验证成功，登陆
             if (data.flag) {
-                this.document.title = "用户"+userId;
+                this.document.title = "用户" + userId;
                 userId = data.userId;
                 userName = data.userName;
                 document.getElementById("userId").value = '';
@@ -228,10 +232,19 @@ var MyRTC = function () {
                 document.getElementById("chatBox").style.display = 'block';
                 document.getElementById("side33").style.display = 'block';
                 document.getElementById("sign1").style.display = 'block';
-                // this.getCategoryInfo();
+                //获得，所有好友的userName
+                //将服务器上所有socketid对应的name记下来
+                this.window.rtc.peerConnectionsName = data.userNames;
             } else {
                 alert('登陆失败，密码错误或者重复登陆');
             }
+        });
+
+        //获得刚登陆的好友名字
+        this.on('OtherName', function (data) {
+            //获得好友的userName
+            this.window.rtc.peerConnectionsName[data.socketId] = data.userName;
+
         });
 
         this.on('register', function (data) {
@@ -638,6 +651,7 @@ var MyRTC = function () {
                         "label": evt.candidate.sdpMLineIndex,
                         "candidate": evt.candidate.candidate,
                         "socketId": socketId
+                        //"userName":peerConnectionsName[socketId]
                     }
                 }));
             that.emit("pc_get_ice_candidate", evt.candidate, socketId, pc);
@@ -739,7 +753,7 @@ var MyRTC = function () {
                 /*that.receiveFileChunk(json);*/
                 that.parseFilePacket(json, socketId);
             } else {
-                that.emit('data_channel_message', channel, socketId, json.data);
+                that.emit('data_channel_message', channel, socketId, json.data, that.peerConnectionsName[socketId]);
             }
         };
 
