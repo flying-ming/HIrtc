@@ -430,12 +430,21 @@ var MyRTC = function () {
     /*************************客户端登陆部分*******************************/
     myrtc.prototype.register = function () {
         var that = this;
-        var username = document.getElementById("nickname").value;
+        var userName = document.getElementById("nickname").value;
         var password = document.getElementById("registerPassword").value;
+        var re_password = document.getElementById("re-registerPassword").value;
+        if(username =="" || password == "" || re_password==""){
+            alert("请输入内容！");
+            return;
+        }
+        if(password !== re_password){
+            alert("两次密码不一致密码！");
+            return;
+        }
         that.socket.send(JSON.stringify({
             "eventName": "_register",
             "data": {
-                "username": username,
+                "username": userName,
                 "password": password
             }
         }));

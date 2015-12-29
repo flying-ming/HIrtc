@@ -98,27 +98,27 @@
 
     </style>
     <script type="text/javascript">
-//        $().ready(function () {
-//            $('.img').jfade();
-//            $('.button').jfade({
-//                start_opacity: "1",
-//                high_opacity: "1",
-//                low_opacity: ".4",
-//                timing: "500"
-//            });
-//            $('.text').jfade({
-//                start_opacity: "1",
-//                high_opacity: "1",
-//                low_opacity: ".7",
-//                timing: "500"
-//            });
-//            $('.links').jfade({
-//                start_opacity: ".9",
-//                high_opacity: "1",
-//                low_opacity: ".2",
-//                timing: "500"
-//            });
-//        });
+        //        $().ready(function () {
+        //            $('.img').jfade();
+        //            $('.button').jfade({
+        //                start_opacity: "1",
+        //                high_opacity: "1",
+        //                low_opacity: ".4",
+        //                timing: "500"
+        //            });
+        //            $('.text').jfade({
+        //                start_opacity: "1",
+        //                high_opacity: "1",
+        //                low_opacity: ".7",
+        //                timing: "500"
+        //            });
+        //            $('.links').jfade({
+        //                start_opacity: ".9",
+        //                high_opacity: "1",
+        //                low_opacity: ".2",
+        //                timing: "500"
+        //            });
+        //        });
 
         function renameFunction() {
             // body...
@@ -253,7 +253,8 @@
                     <div class="container-fluid" style="width:100%;">
 
                         <div class="col-xs-4 col-md-4">
-                            <button type="button" href="#panel2" class="btn btn-default" data-dismiss="modal" id="renamebtn">私聊
+                            <button type="button" href="#panel2" class="btn btn-default" data-dismiss="modal"
+                                    id="renamebtn">私聊
                             </button>
                         </div>
                         <!--<div class="col-xs-3 col-md-3"><button type="button" class="btn btn-default" data-dismiss="modal">移动到</button></div> -->
@@ -292,13 +293,14 @@
                 <div class="tab-pane" id="panel3">
                     <div id="shipin" style="display: block">点击视频</div>
                     <div class="msgs" id="msgs"></div>
-                    <div class="modal-footer" id="grouptalk"  style="display: none">
+                    <div class="modal-footer" id="grouptalk" style="display: none">
                         <table>
                             <tr>
                                 <td id="msgbox2">
                                     <input type="text" id="msgIpt" style="width:100%;height:100%"/></td>
                                 <td>
-                                    <button type="button" id="sendBtn" class="btn btn-primary" data-dismiss="modal">发送</button>
+                                    <button type="button" id="sendBtn" class="btn btn-primary" data-dismiss="modal">发送
+                                    </button>
                                 </td>
                             </tr>
                         </table>
@@ -363,10 +365,10 @@
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
                 <h4 class="modal-title">好友申请</h4>
             </div>
-            <div class="modal-body" ><h4 class="friendinfo"></h4>
+            <div class="modal-body"><h4 class="friendinfo"></h4>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal" >取消</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
                 <button type="button" class="btn btn-primary" data-dismiss="modal">确定</button>
             </div>
         </div>
@@ -460,9 +462,9 @@
     var rtc = MyRTC();
     var videoBtn = document.getElementById("videoBtn");
     var addFriendBtn = document.getElementById("addfriend");
-    var friend = document.getElementById("friends");
- //   var privatetalk = document.getElementById("private");
-    var groups = document.getElementById("group");
+    var friend = document.getElementById("panel1");
+    var privatetalk = document.getElementById("panel2");
+    var groups = document.getElementById("panel3");
     /**********************************************************/
     loginBtn.onclick = function (event) {
         //登陆
@@ -471,9 +473,9 @@
 
     };
     //回车键提交密码
-    document.getElementById("password").onkeydown = function(e){
-        e = e||event;
-        if(e.keyCode === 13) {
+    document.getElementById("password").onkeydown = function (e) {
+        e = e || event;
+        if (e.keyCode === 13) {
             rtc.clientLogin();
             rtc.getCategoryInfo();
         }
@@ -483,9 +485,9 @@
         rtc.register();
 //        rtc.getCategoryInfo();
     };
-    document.getElementById("re-registerPassword").onkeydown = function(e){
-        e = e||event;
-        if(e.keyCode === 13) {
+    document.getElementById("re-registerPassword").onkeydown = function (e) {
+        e = e || event;
+        if (e.keyCode === 13) {
             rtc.register();
             rtc.getCategoryInfo();
         }
@@ -500,49 +502,62 @@
     // };
     var flag = 1;
     videoBtn.onclick = function (event) {
-        if(flag == 1) {
-           // document.getElementById("chat-content_2").style.display = 'block';
+        if (flag == 1) {
             document.getElementById("msgs").style.display = 'block';
             document.getElementById("grouptalk").style.display = 'block';
+            document.getElementById("panel3").style.display = 'block';
             document.getElementById("panel2").style.display = 'none';
             document.getElementById("panel1").style.display = 'none';
             document.getElementById("shipin").style.display = 'none';
-            friend.onclick = function(event){
-                document.getElementById("panel1").style.display='block';
-                document.getElementById("panel2").style.display='none';
-                document.getElementById("panel3").style.display='none';
-            };
+//            friend.onclick = function(event){
+//                document.getElementById("panel1").style.display='block';
+//                document.getElementById("panel2").style.display='none';
+//                document.getElementById("panel3").style.display='none';
+//                document.getElementById("msgs").style.display = 'none';
+//                document.getElementById("grouptalk").style.display = 'none';
+//
+//            };
 //            privatetalk.onclick = function(event){
 //                document.getElementById("panel2").style.display='block';
 //                document.getElementById("panel1").style.display='none';
-//                       document.getElementById("panel3").style.display='none';
+//                document.getElementById("panel3").style.display='none';
 //            };
-            groups.onclick = function(event){
-                document.getElementById("panel3").style.display='block';
-                document.getElementById("panel1").style.display='none';
-                document.getElementById("panel2").style.display='none';
-            };
+//            groups.onclick = function(event){
+//                document.getElementById("msgs").style.display = 'block';
+//                document.getElementById("grouptalk").style.display = 'block';
+//                document.getElementById("panel3").style.display='block';
+//                document.getElementById("panel1").style.display='none';
+//                document.getElementById("panel2").style.display='none';
+//            };
             flag = 0;
         }
-        else{
-            friend.onclick = function(event){
-                document.getElementById("panel1").style.display='block';
-                document.getElementById("panel2").style.display='none';
-                document.getElementById("panel3").style.display='none';
-            };
-            privatetalk.onclick = function(event){
-                document.getElementById("panel2").style.display='block';
-                document.getElementById("panel1").style.display='none';
-                document.getElementById("panel3").style.display='none';
-            };
-            groups.onclick = function(event){
-                document.getElementById("panel3").style.display='block';
-                document.getElementById("panel1").style.display='none';
-                document.getElementById("panel2").style.display='none';
-            };
-          //  document.getElementById("chat-content_2").style.display = 'block';
+        else {
+//            friend.onclick = function(event){
+//                document.getElementById("panel1").style.display='block';
+//                document.getElementById("panel2").style.display='none';
+//                document.getElementById("panel3").style.display='none';
+//                document.getElementById("msgs").style.display = 'none';
+//                document.getElementById("grouptalk").style.display = 'none';
+//            };
+//            privatetalk.onclick = function(event){
+//                document.getElementById("panel2").style.display='block';
+//                document.getElementById("panel1").style.display='none';
+//                document.getElementById("panel3").style.display='none';
+//                document.getElementById("msgs").style.display = 'none';
+//                document.getElementById("grouptalk").style.display = 'none';
+//            };
+//            groups.onclick = function(event){
+//                document.getElementById("panel3").style.display='block';
+//                document.getElementById("msgs").style.display = 'block';
+//                document.getElementById("grouptalk").style.display = 'block';
+//                document.getElementById("panel1").style.display='none';
+//                document.getElementById("panel2").style.display='none';
+//            };
+            //  document.getElementById("chat-content_2").style.display = 'block';
             document.getElementById("msgs").style.display = 'block';
-            document.getElementById("panel2").style.display = 'block';
+            document.getElementById("grouptalk").style.display = 'block';
+            document.getElementById("panel3").style.display = 'block';
+            document.getElementById("panel2").style.display = 'none';
             document.getElementById("panel1").style.display = 'none';
             document.getElementById("shipin").style.display = 'none';
         }
@@ -554,16 +569,16 @@
     };
 
 
-    sendBtn.onclick = function(event) {
-         var msgIpt = document.getElementById("msgIpt"),
-             msg = msgIpt.value,
-             p = document.createElement("p");
-         p.innerText = "me: " + msg;
-         //广播消息
-         rtc.broadcast(msg);
+    sendBtn.onclick = function (event) {
+        var msgIpt = document.getElementById("msgIpt"),
+                msg = msgIpt.value,
+                p = document.createElement("p");
+        p.innerText = "me: " + msg;
+        //广播消息
+        rtc.broadcast(msg);
         msgIpt.value = "";
-         msgs.appendChild(p);
-     };
+        msgs.appendChild(p);
+    };
 
     // sendFileBtn.onclick = function(event) {
     //     //分享文件
