@@ -25,18 +25,17 @@
             overflow-y: hidden;
         }
 
-        #videos {
-            position: absolute;
-            left: 30%;
-            top: 0;
-            bottom: 0;
-            right: 0;
-            overflow: auto;
-        }
-
         #videos video {
             display: inline-block;
-            width: 32%;
+            width:30%;
+        }
+
+        #me {
+            display: inline-block;
+            width: 150px;
+            position: absolute;
+            bottom: 10px;
+            left: 0px;
         }
 
         #side33 {
@@ -291,15 +290,15 @@
                 <!--群聊-->
 
                 <div class="tab-pane" id="panel3">
-                    <div id="shipin" style="display: block">点击视频</div>
+                    <div id="shipin">点击视频</div>
                     <div class="msgs" id="msgs"></div>
-                    <div class="modal-footer" id="grouptalk" style="display: none">
+                    <div class="modal-footer hide" id="grouptalk">
                         <table>
                             <tr>
                                 <td id="msgbox2">
-                                    <input type="text" id="msgIpt" style="width:100%;height:100%"/></td>
+                                    <input type="text" id="msgIpt" class="msgIpt"  style="width:100%;height:100%"/></td>
                                 <td>
-                                    <button type="button" id="sendBtn" class="btn btn-primary" data-dismiss="modal">发送
+                                    <button type="button" id="sendBtn" class="btn btn-primary sendBtn" data-dismiss="modal">发送
                                     </button>
                                 </td>
                             </tr>
@@ -460,7 +459,7 @@
     var sendFileBtn = document.getElementById("sendFileBtn");
     var files = document.getElementById("files");
     var rtc = MyRTC();
-    var videoBtn = document.getElementById("videoBtn");
+    var videoBtn = document.getElementById("top2");
     var addFriendBtn = document.getElementById("addfriend");
     var friend = document.getElementById("panel1");
     var privatetalk = document.getElementById("panel2");
@@ -496,76 +495,26 @@
         //
         rtc.reqfriend();
     }
-    // alertBtn.onclick = function(event) {
-    //     // body...
-    //     alert("1");
-    // };
     var flag = 1;
     videoBtn.onclick = function (event) {
         if (flag == 1) {
-            document.getElementById("msgs").style.display = 'block';
-            document.getElementById("grouptalk").style.display = 'block';
-            document.getElementById("panel3").style.display = 'block';
-            document.getElementById("panel2").style.display = 'none';
-            document.getElementById("panel1").style.display = 'none';
-            document.getElementById("shipin").style.display = 'none';
-//            friend.onclick = function(event){
-//                document.getElementById("panel1").style.display='block';
-//                document.getElementById("panel2").style.display='none';
-//                document.getElementById("panel3").style.display='none';
-//                document.getElementById("msgs").style.display = 'none';
-//                document.getElementById("grouptalk").style.display = 'none';
-//
-//            };
-//            privatetalk.onclick = function(event){
-//                document.getElementById("panel2").style.display='block';
-//                document.getElementById("panel1").style.display='none';
-//                document.getElementById("panel3").style.display='none';
-//            };
-//            groups.onclick = function(event){
-//                document.getElementById("msgs").style.display = 'block';
-//                document.getElementById("grouptalk").style.display = 'block';
-//                document.getElementById("panel3").style.display='block';
-//                document.getElementById("panel1").style.display='none';
-//                document.getElementById("panel2").style.display='none';
-//            };
+            $("#shipin").addClass("hide");
+            $("#msgs").removeClass("hide");
+            $("#grouptalk").removeClass("hide");
+            $("#videoBtn").attr("src", "image/micstop.png");
+            rtc.createStream({
+                "video": true,
+                "audio": true
+            });
             flag = 0;
         }
         else {
-//            friend.onclick = function(event){
-//                document.getElementById("panel1").style.display='block';
-//                document.getElementById("panel2").style.display='none';
-//                document.getElementById("panel3").style.display='none';
-//                document.getElementById("msgs").style.display = 'none';
-//                document.getElementById("grouptalk").style.display = 'none';
-//            };
-//            privatetalk.onclick = function(event){
-//                document.getElementById("panel2").style.display='block';
-//                document.getElementById("panel1").style.display='none';
-//                document.getElementById("panel3").style.display='none';
-//                document.getElementById("msgs").style.display = 'none';
-//                document.getElementById("grouptalk").style.display = 'none';
-//            };
-//            groups.onclick = function(event){
-//                document.getElementById("panel3").style.display='block';
-//                document.getElementById("msgs").style.display = 'block';
-//                document.getElementById("grouptalk").style.display = 'block';
-//                document.getElementById("panel1").style.display='none';
-//                document.getElementById("panel2").style.display='none';
-//            };
-            //  document.getElementById("chat-content_2").style.display = 'block';
-            document.getElementById("msgs").style.display = 'block';
-            document.getElementById("grouptalk").style.display = 'block';
-            document.getElementById("panel3").style.display = 'block';
-            document.getElementById("panel2").style.display = 'none';
-            document.getElementById("panel1").style.display = 'none';
-            document.getElementById("shipin").style.display = 'none';
+            $("#shipin").removeClass("hide");
+            $("#msgs").addClass("hide");
+            $("#grouptalk").addClass("hide");
+            $("#videoBtn").attr("src", "image/mic.png");
+            flag = 1;
         }
-        rtc.createStream({
-            "video": true,
-            "audio": true
-        });
-        // alert("1");
     };
 
 

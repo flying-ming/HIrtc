@@ -521,6 +521,7 @@ function Myrtc() {
             var groups = [];
             var currentGroup;
             //for(var cli = 0;cli<)
+            //
             var userGetSql = 'select * from friend_info  where user_id=? and category_id=?';
             var userGetSql_Params = [data.userId, "1"];
             connection.query(userGetSql, userGetSql_Params, function (err, result) {
@@ -546,11 +547,17 @@ function Myrtc() {
                     }), errorCb);
                     return;
                 }
-                var friendIdList = [res['friend_id']];
-                var friendNameList = [res['friend_name']];
-                for(i=0;i<friendIdList.length;i++){
-                    currentGroup.friends.push({id:friendIdList[i],name:friendNameList[i]});
+                for(i=0;i<result.length;i++){
+                    currentGroup.friends.push({
+                        id:result[i]['friend_id'],
+                        name:result[i]['friend_name']
+                    });
                 }
+                //var friendIdList = [res['friend_id']];
+                //var friendNameList = [res['friend_name']];
+                //for(i=0;i<friendIdList.length;i++){
+                //    currentGroup.friends.push({id:friendIdList[i],name:friendNameList[i]});
+                //}
                 groups.push(currentGroup);
                 socket.send(JSON.stringify({
                     "eventName": "showCategory",
