@@ -240,7 +240,7 @@ var MyRTC = function () {
                 "eventName": "__login",
                 "data": {
                     "userId": userId,
-                    "password": password
+                    "password": data.password
                 }
             }));
             //document.getElementById("loginbox").style.display = 'none';
