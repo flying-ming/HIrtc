@@ -86,6 +86,10 @@ var MyRTC = function () {
         this.fileChannels = {};
         //保存所有接受到的文件
         this.receiveFiles = {};
+        //保存现在正在聊天的好友id
+        this.curFriendId = null;
+        //保存目前好友列表中第一位的好友id
+        this.curFirstFriendId = null;
     }
 
     //继承自事件处理器，提供绑定事件和触发事件的功能
@@ -147,10 +151,6 @@ var MyRTC = function () {
             }));
         };
 
-        //this.on('__new', function (data) {
-        //    //获取所有服务器上的
-        //    alert(data.name);
-        //});
 
         this.on('_peers', function (data) {
             //获取服务器上所有的socketid

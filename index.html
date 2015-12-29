@@ -286,15 +286,16 @@
                 </div>
                 <!--私聊-->
                 <div class="tab-pane" id="panel2">
+                    <div class="msgs" id="privMsgs"></div>
                     <div class="modal-footer">
                         <!--<input type="file" id="fileIpt" style="position:absolute">-->
                         <!--<button id="sendFileBtn">发送文件</button>-->
                         <table>
                             <tr>
                                 <td id="msgbox">
-                                    <input type="text" style="width:100%;height:100%"/></td>
+                                    <input type="text" id="privMsgIpt" class="msgIpt" style="width:100%;height:100%"/></td>
                                 <td>
-                                    <button type="button" class="btn btn-primary" data-dismiss="modal">发送</button>
+                                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="privateSendBtn">发送</button>
                                 </td>
                             </tr>
                         </table>
@@ -470,6 +471,8 @@
     var registerBtn = document.getElementById("registerBtn");
     var videos = document.getElementById("videos");
     var sendBtn = document.getElementById("sendBtn");
+    var privateSendBtn = document.getElementById("privateSendBtn");
+    var privMsgs = document.getElementById("privMsgs");
     var msgs = document.getElementById("msgs");
     //    var sendFileBtn = document.getElementById("sendFileBtn");
     var files = document.getElementById("files");
@@ -494,10 +497,9 @@
             rtc.getCategoryInfo();
         }
     }
+    //注册
     registerBtn.onclick = function (event) {
-        //注册
         rtc.register();
-//        rtc.getCategoryInfo();
     };
     document.getElementById("re-registerPassword").onkeydown = function (e) {
         e = e || event;
@@ -542,6 +544,17 @@
         rtc.broadcast(msg);
         msgIpt.value = "";
         msgs.appendChild(p);
+    };
+
+    privateSendBtn.onclick = function (event) {
+        var msgIpt = document.getElementById("privMsgIpt"),
+                msg = msgIpt.value,
+                p = document.createElement("p");
+        p.innerText = "me: " + msg;
+        //广播消息
+//        rtc.broadcast(msg);
+        msgIpt.value = "";
+        privMsgs.appendChild(p);
     };
 
     // sendFileBtn.onclick = function(event) {
