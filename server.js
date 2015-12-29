@@ -271,8 +271,8 @@ function Myrtc() {
                         });
                         //创建默认会议群
                         //将此用户的socket加入服务器全局变量中
-                        that.userId.push(maxid);
-                        that.userSockets[maxid] = socket;
+                        //that.userId.push(maxid);
+                        //that.userSockets[maxid] = socket;
                         //告诉新用户，注册成功
                         socket.send(JSON.stringify({
                             "eventName": "register",
@@ -544,8 +544,8 @@ function Myrtc() {
                     }), errorCb);
                     return;
                 }
-                var friendIdList = res['friend_id'];
-                var friendNameList = res['friend_name'];
+                var friendIdList = [res['friend_id']];
+                var friendNameList = [res['friend_name']];
                 for(i=0;i<friendIdList.length;i++){
                     currentGroup.friends.push({id:friendIdList[i],name:friendNameList[i]});
                 }
