@@ -1,10 +1,15 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //这里是服务器的数据库模块
 var mysql = require('mysql');
-
 var clc = require('cli-color');
 var SQL_DATABASE = 'chat';
 var SQL_TABLE = 'user_info';
+
+//用来保存当前连接服务器用户的socket ，键是 userId ，值是 socket
+userSockets = {};
+//用来保存当前连接服务器用户的socket ，键是 socket.id ，值是 userId
+//这么做主要是为了，根据socket索引 userId，比如，socket关闭的时候，
+userIds = {};
 
 //数据库
 //启动数据库
@@ -166,7 +171,7 @@ var errorCb = function (rtc) {
 
 function Myrtc() {
     //用来保存 登陆用户的socket ，键是 userId ，值是 socket
-    this.userSockets = {};
+    //this.userSockets = {};
     this.sockets = [];
     //记录下 所有登陆成功的 user
     this.userId = [];
@@ -214,17 +219,7 @@ function Myrtc() {
         //终端输出 有新用户连接服务器
         this.emit('new_peer', socket, room);
     });
-    this.on('__close', function(data,socket){
-        console.log(clc.red('[ 高能 ]') + "有客户端断开连接");
-        //把    this.userSockets  this.sockets  去掉
-        //var i;
-        //for(i=0;i<this.sockets.length;i++){
-        //    if(data.socket == this.userSockets[i]){
-        //        this.sockets.splice(i,1);
-        //    }
-        //    delete this.userSockets[data.userId];
-        //}
-    });
+
     //注册
     this.on('_register', function (data, socket) {
         var that = this;
@@ -272,8 +267,6 @@ function Myrtc() {
                         });
                         //创建默认会议群
                         //将此用户的socket加入服务器全局变量中
-                        //that.userId.push(maxid);
-                        //that.userSockets[maxid] = socket;
                         //告诉新用户，注册成功
                         socket.send(JSON.stringify({
                             "eventName": "register",
@@ -316,20 +309,17 @@ function Myrtc() {
                 if (data.userId <= maxid) {
                     //验证是否重复登陆
                     console.log(clc.blue("[ 调试 ]") + "验证：是否重复登陆,user"+data.userId);
-                    //console.log
-                    for (var i = 0; i < that.userId.length; i++) {
-                        console.log(clc.blue("[ 调试 ]") + "验证：是否重复登陆,server"+that.userId[i]);
-                        if (data.userId == that.userId[i]) {
-                            //登陆失败
-                            socket.send(JSON.stringify({
-                                "eventName": "password",
-                                "data": {
-                                    "flag": 0
-                                }
-                            }), errorCb);
-                            console.log(clc.yellow("[ 警告 ]") + "登陆失败：重复登陆");
-                            return;
-                        }
+                    if(userSockets[data.userId] != undefined){
+                        console.log(clc.red("[ 错误 ]")+ "重复登陆");
+                        //登陆失败
+                        socket.send(JSON.stringify({
+                            "eventName": "password",
+                            "data": {
+                                "flag": 0
+                            }
+                        }), errorCb);
+                        console.log(clc.yellow("[ 警告 ]") + "登陆失败：重复登陆");
+                        return;
                     }
                     //不是重复登陆
                     //需要从数据库验证密码
@@ -359,7 +349,9 @@ function Myrtc() {
                                 //将此用户的socket加入服务器全局变量中
                                 var strUserid = '' + data.userId;
                                 that.userId.push(data.userId);
-                                that.userSockets[strUserid] = socket;
+                                //that.userSockets[strUserid] = socket;
+                                userSockets[data.userId] = socket;
+                                userIds[socket.id] = data.userId;
                                 console.log(clc.green('[ 消息 ]') + "id为" + data.userId + "的用户登陆成功");
                                 //给客户端发送登陆成功
                                 socket.send(JSON.stringify({
@@ -559,6 +551,7 @@ function Myrtc() {
                 //    currentGroup.friends.push({id:friendIdList[i],name:friendNameList[i]});
                 //}
                 groups.push(currentGroup);
+
                 socket.send(JSON.stringify({
                     "eventName": "showCategory",
                     "data": {
@@ -576,7 +569,8 @@ function Myrtc() {
         //如果添加自己为好友，返回错误
         if(data.userId == data.friend_id) {
             console.log(clc.red('[ 错误 ]') + "添加自己为好友");
-            that.userSockets[data.userId].send(JSON.stringify({
+            userSockets[data.userId].send(JSON.stringify({
+            //that.userSockets[data.userId].send(JSON.stringify({
                 "eventName":"_reqAddFriend",
                 "data":{
                     flag:1
@@ -597,7 +591,8 @@ function Myrtc() {
             //如果已经是好友，返回错误  没写
             //如果在线
             if (res) {
-                that.userSockets[data.friend_id].send(JSON.stringify({
+                userSockets[data.friend_id].send(JSON.stringify({
+                //that.userSockets[data.friend_id].send(JSON.stringify({
                     "eventName": "_reqAddFriend",
                     "data": {
                         "flag":0,
@@ -611,7 +606,8 @@ function Myrtc() {
                 //如果不在线
             } else {
                 //没有此好友 或者 好友不在线
-                that.userSockets[data.userId].send(JSON.stringify({
+                userSockets[data.userId].send(JSON.stringify({
+                //that.userSockets[data.userId].send(JSON.stringify({
                     "eventName":"_reqAddFriend",
                     "data":{
                         "flag":1
@@ -644,15 +640,19 @@ function Myrtc() {
                 console.log('[ADDUSER ERROR]-', err.message);
                 return;
             } else {
-                that.userSockets[data.userId].send(JSON.stringify({
+                //that.userSockets[data.userId].send(JSON.stringify({
+                userSockets[data.userId].send(JSON.stringify({
                     "eventName": "_addFriend",
                     "data": {
+                        "friendName":data.reqFriendName,
                         "flag": 0 //通知被加好友添加好友成功
                     }
                 }), errorCb);
-                that.userSockets[data.reqFriendId].send(JSON.stringify({
+                //that.userSockets[data.reqFriendId].send(JSON.stringify({
+                userSockets[data.reqFriendId].send(JSON.stringify({
                     "eventName": "_addFriend",
                     "data": {
+                        "friendName":data.userName,
                         "flag": 0 //通知申请好友添加好友成功
                     }
                 }), errorCb);
@@ -665,7 +665,8 @@ function Myrtc() {
         //console.log(clc.blue('[ 调试 ]') + "请求发起者是" + data.reqFriendId);
         console.log(clc.blue('[ 调试 ]') + "进入拒绝添加好友程序");
         //告诉发起请求者，请求被拒绝
-        this.userSockets[data.reqFriendId].send(JSON.stringify({
+        //this.userSockets[data.reqFriendId].send(JSON.stringify({
+        userSockets[data.reqFriendId].send(JSON.stringify({
             "eventName": "refuse_addFreiend",
             "data": {
                 "friend_name": data.reqFriendName,
@@ -841,6 +842,7 @@ Myrtc.prototype.init = function (socket) {
     });
     //连接关闭后从RTC实例中移除连接，并通知其他连接
     socket.on('close', function () {
+        console.log(clc.blue('[ 调试 ]') + "有用户断开连接");
         var i, m,
             room = socket.room,
             curRoom;
@@ -862,6 +864,10 @@ Myrtc.prototype.init = function (socket) {
         that.removeSocket(socket);
 
         that.emit('remove_peer', socket.id, that);
+        //把 userSockets 移除
+        delete userSockets[userIds[socket.id]];
+        delete userIds[socket.id];
+
     });
     that.emit('new_connect', socket);
 };

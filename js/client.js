@@ -216,9 +216,11 @@ var MyRTC = function () {
             that.sendOffers();
         });
 
+        //获得从服务器发来的验证消息结果
         this.on('password', function (data) {
+            //验证成功，登陆
             if (data.flag) {
-                //alert('登陆了');
+                this.document.title = "用户"+userId;
                 userId = data.userId;
                 userName = data.userName;
                 document.getElementById("userId").value = '';
@@ -228,7 +230,7 @@ var MyRTC = function () {
                 document.getElementById("sign1").style.display = 'block';
                 // this.getCategoryInfo();
             } else {
-                alert('denglu shibai');
+                alert('登陆失败，密码错误或者重复登陆');
             }
         });
 
@@ -243,22 +245,19 @@ var MyRTC = function () {
                     "password": data.password
                 }
             }));
-            //document.getElementById("loginbox").style.display = 'none';
-            //document.getElementById("chatBox").style.display = 'block';
-            //document.getElementById("side33").style.display = 'block';
-            // this.getCategoryInfo();
         });
 
         this.on('showCategory', onShowCategory);
         function onShowCategory(data) {
-            if ('catename' in data)
-                return;
             // alert("显示分组");
             // alert(data.catename);
+            $('#accordion').empty();
             var groups = data.groups;
             for (var i = 0; i < groups.length; i++) {
                 var group = groups[i];
                 var groupEl = $('<li><div class="link" name="link"><i class="fa fa-globe"></i>' + group.groupName + '<i class="fa fa-chevron-down"></i></div><ul name="submenu" class="submenu"></ul></li>')
+                var linkEl = groupEl.find('div.link');
+                linkEl.click(onFriendListGroupDropDown)
                 var groupFriendEl = groupEl.find('ul');
                 //                cateTab.addEventListener("click", renameFunction);
 
@@ -304,45 +303,26 @@ var MyRTC = function () {
             //         this.setAttribute("display","none");
             //     },false);
             // }
-            var Accordion = function (el, multiple) {
-                this.el = el || {};
-                this.multiple = multiple || false;
-
-                // Variables privadas
-                var links = this.el.find('.link');
-                // Evento
-                links.on('click', {
-                    el: this.el,
-                    multiple: this.multiple
-                }, this.dropdown)
-            }
-
-            Accordion.prototype.dropdown = function (e) {
-                var $el = e.data.el;
-                $this = $(this),
-                    $next = $this.next();
-
-                $next.slideToggle();
-                $this.parent().toggleClass('open');
-
-                if (!e.data.multiple) {
-                    $el.find('.submenu').not($next).slideUp().parent().removeClass('open');
-                }
-                ;
-            }
-
-            var accordion = new Accordion($('#accordion'), false);
-
         }
 
-        //FIXME Test Code
-        window.onShowCategory = onShowCategory;
-        //FIXME R
+        ////FIXME Test Code
+        //window.onShowCategory = onShowCategory;
+        ////FIXME R
+
+        function onFriendListGroupDropDown(e) {
+            var $this = $(this),
+                $next = $this.next();
+
+            $next.slideToggle();
+            $this.parent().toggleClass('open');
+
+            $('#accordion').find('.submenu').not($next).slideUp().parent().removeClass('open');
+        }
 
         /*******************验证好友************************/
         this.on('_reqAddFriend', function (data) {
             alert("收到好友请求");
-            if(data.flag == 1){
+            if (data.flag == 1) {
                 alert("请求好友错误");
                 return;
             }
@@ -353,10 +333,10 @@ var MyRTC = function () {
             //同意添加   不同意添加
             $('#friendapplication').modal('show');
             var modal = $('#friendapplication');
-            modal.find('.friendinfo').text('id为'+data.reqFriendId+ '名字为'+data.reqFriendName+'的好友请求添加你为好友！'+'验证消息为：'+data.reqFriendMessage);
+            modal.find('.friendinfo').text('id为' + data.reqFriendId + '名字为' + data.reqFriendName + '的好友请求添加你为好友！' + '验证消息为：' + data.reqFriendMessage);
             //var result = confirm("id为"+data.reqFriendId + '名字为'+data.reqFriendName+'的好友请求添加你为好友！'+"验证消息为："+data.reqFriendMessage);
             //同意 ,0为同意 ，1 为拒绝
-            modal.find(".btn.btn-default").get(0).onclick = function(){
+            modal.find(".btn.btn-default").get(0).onclick = function () {
                 //alert("default");
                 //发送给服务端修改friend_info表
                 that.socket.send(JSON.stringify({
@@ -370,7 +350,7 @@ var MyRTC = function () {
                     }
                 }))
             };
-            modal.find(".btn.btn-primary").get(0).onclick = function(){
+            modal.find(".btn.btn-primary").get(0).onclick = function () {
                 //alert("primary");
                 that.socket.send(JSON.stringify({
                     "eventName": "__addFriend",
@@ -431,6 +411,18 @@ var MyRTC = function () {
                 return;
             }
         });
+        /***************************接到好友添加成功的消息*******************/
+        this.on('_addFriend', function (data) {
+            alert("你和" + data.friendName + "已经成为好友了，开始聊天吧");
+            //通知服务器重新发一遍好友列表
+            //var that = this;
+            this.rtc.socket.send(JSON.stringify({
+                "eventName": "getCategoryInfo",
+                "data": {
+                    "userId": userId
+                }
+            }));
+        });
     };
 
 
@@ -440,11 +432,11 @@ var MyRTC = function () {
         var userName = document.getElementById("nickname").value;
         var password = document.getElementById("registerPassword").value;
         var re_password = document.getElementById("re-registerPassword").value;
-        if(userName =="" || password == "" || re_password==""){
+        if (userName == "" || password == "" || re_password == "") {
             alert("请输入内容！");
             return;
         }
-        if(password !== re_password){
+        if (password !== re_password) {
             alert("两次密码不一致密码！");
             return;
         }
@@ -661,7 +653,7 @@ var MyRTC = function () {
 
         pc.onaddstream = function (evt) {
             that.emit('pc_add_stream', evt.stream, socketId, pc);
-            alert("有视频接入");
+            //alert("有视频接入");
         };
 
         pc.ondatachannel = function (evt) {

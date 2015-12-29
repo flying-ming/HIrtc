@@ -24,15 +24,27 @@
             height: 100%;
             overflow-y: hidden;
         }
+        #videos {
+            position: absolute;
+            left: 30%;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            overflow: auto;
+        }
 
         #videos video {
             display: inline-block;
-            width:30%;
+            width: 20%;
         }
+        /*#videos video {*/
+            /*display: inline-block;*/
+            /*width:30%;*/
+        /*}*/
 
         #me {
             display: inline-block;
-            width: 150px;
+            /*width: 150px;*/
             position: absolute;
             bottom: 10px;
             left: 0px;
@@ -273,8 +285,8 @@
                 <!--私聊-->
                 <div class="tab-pane" id="panel2">
                     <div class="modal-footer">
-                        <input type="file" id="fileIpt" style="position:absolute">
-                        <button id="sendFileBtn">发送文件</button>
+                        <!--<input type="file" id="fileIpt" style="position:absolute">-->
+                        <!--<button id="sendFileBtn">发送文件</button>-->
                         <table>
                             <tr>
                                 <td id="msgbox">
@@ -456,7 +468,7 @@
     var videos = document.getElementById("videos");
     var sendBtn = document.getElementById("sendBtn");
     var msgs = document.getElementById("msgs");
-    var sendFileBtn = document.getElementById("sendFileBtn");
+//    var sendFileBtn = document.getElementById("sendFileBtn");
     var files = document.getElementById("files");
     var rtc = MyRTC();
     var videoBtn = document.getElementById("top2");
