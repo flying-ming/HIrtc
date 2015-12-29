@@ -214,16 +214,17 @@ function Myrtc() {
         //终端输出 有新用户连接服务器
         this.emit('new_peer', socket, room);
     });
-    //this.on('__close', function(data,socket){
-    //    //把    this.userSockets  this.sockets  去掉
-    //    var i;
-    //    for(i=0;i<this.sockets.length;i++){
-    //        if(data.socket == this.userSockets[i]){
-    //            this.sockets.splice(i,1);
-    //        }
-    //        delete this.userSockets[data.userId];
-    //    }
-    //});
+    this.on('__close', function(data,socket){
+        console.log(clc.red('[ 高能 ]') + "有客户端断开连接");
+        //把    this.userSockets  this.sockets  去掉
+        //var i;
+        //for(i=0;i<this.sockets.length;i++){
+        //    if(data.socket == this.userSockets[i]){
+        //        this.sockets.splice(i,1);
+        //    }
+        //    delete this.userSockets[data.userId];
+        //}
+    });
     //注册
     this.on('_register', function (data, socket) {
         var that = this;
@@ -965,14 +966,6 @@ app.get('/js/myjs.js', function (req, res) {
     res.sendfile(__dirname + '/js/myjs.js');
 });
 
-// app.get('/js_1/npm.js', function(req, res) {
-//     res.sendfile(__dirname + '/js_1/npm.js');
-// });
-
-
-// app.get('/jquery.js', function(req, res) {
-//     res.sendfile(__dirname + '/js/jquery.js');
-// });
 
 app.get('/js/client.js', function (req, res) {
     res.sendfile(__dirname + '/js/client.js');
