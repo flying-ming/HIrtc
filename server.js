@@ -10,7 +10,7 @@ userSockets = {};
 //用来保存当前连接服务器用户的id ，键是 socket.id ，值是 userId
 //这么做主要是为了，根据socket索引 userId，比如，socket关闭的时候，
 userIds = {};
-//用来保存当前连接服务器用户的userName ，键是 socket.id ，值是 userId
+//用来保存当前连接服务器用户的userName ，键是 socket.id ，值是 userName
 userNames = {};
 
 //数据库
@@ -741,6 +741,18 @@ function Myrtc() {
         });
     });
 
+    //客户端的请求转发私聊消息
+    this.on('_privMessage', function (data, socket) {
+        //查找出 data.friendId 对应的 friendName
+        userSockets[data.friendId].send(JSON.stringify({
+            "eventName": "privMessage",
+            "data": {
+                "message":data.message,
+                "friendId":data.userId,
+                "friendName":userNames[socket.id]
+            }
+        }),errorCb);
+    });
 
     //与客户端交互， 点对点连接部分 this.on() 对应着 myrtc.socket.send()
     this.on('__ice_candidate', function (data, socket) {
@@ -759,6 +771,7 @@ function Myrtc() {
             this.emit('ice_candidate', socket, data);
         }
     });
+
     //与客户端交互，信令交互部分
     this.on('__offer', function (data, socket) {
         var soc = this.getSocket(data.socketId);

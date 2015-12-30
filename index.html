@@ -286,7 +286,7 @@
                 </div>
                 <!--私聊-->
                 <div class="tab-pane" id="panel2">
-                    <div class="msgs" id="privMsgs"></div>
+                    <!--<div class="msgs" id="privMsgs"><p>打个招呼吧</p></div>-->
                     <div class="modal-footer">
                         <!--<input type="file" id="fileIpt" style="position:absolute">-->
                         <!--<button id="sendFileBtn">发送文件</button>-->
@@ -472,7 +472,7 @@
     var videos = document.getElementById("videos");
     var sendBtn = document.getElementById("sendBtn");
     var privateSendBtn = document.getElementById("privateSendBtn");
-    var privMsgs = document.getElementById("privMsgs");
+//    var privMsgs = document.getElementById("privMsgs");
     var msgs = document.getElementById("msgs");
     //    var sendFileBtn = document.getElementById("sendFileBtn");
     var files = document.getElementById("files");
@@ -482,11 +482,12 @@
     var friend = document.getElementById("panel1");
     var privatetalk = document.getElementById("panel2");
     var groups = document.getElementById("panel3");
+    //用来记录 现在私聊的对象
+    var curFriendId;
     /**********************************************************/
     loginBtn.onclick = function (event) {
         //登陆
         rtc.clientLogin();
-        rtc.getCategoryInfo();
 
     };
     //回车键提交密码
@@ -494,7 +495,6 @@
         e = e || event;
         if (e.keyCode === 13) {
             rtc.clientLogin();
-            rtc.getCategoryInfo();
         }
     }
     //注册
@@ -505,7 +505,6 @@
         e = e || event;
         if (e.keyCode === 13) {
             rtc.register();
-            rtc.getCategoryInfo();
         }
     }
     addFriendBtn.onclick = function (event) {
@@ -541,10 +540,14 @@
                 p = document.createElement("p");
         p.innerText = "me: " + msg;
         //广播消息
-        rtc.broadcast(msg);
+        rtc.broadcast(msg,friendId);
         msgIpt.value = "";
         msgs.appendChild(p);
     };
+
+    //点击私聊发送按钮的逻辑是：
+    //点击的时候先查询有没有这个好友的聊天面板,没有的话，显示默认聊天面板（打个招呼吧）,把其他所有聊天面板设为none
+    //输入不为空的消息并且发送后，创建聊天面板，并把默认聊天面板置为none
 
     privateSendBtn.onclick = function (event) {
         var msgIpt = document.getElementById("privMsgIpt"),
@@ -552,9 +555,10 @@
                 p = document.createElement("p");
         p.innerText = "me: " + msg;
         //广播消息
-//        rtc.broadcast(msg);
+        rtc.privMessage(msg,curFriendId);
         msgIpt.value = "";
-        privMsgs.appendChild(p);
+        var privMsge = document.getElementById('content'+curFriendId);
+        privMsge.appendChild(p);
     };
 
     // sendFileBtn.onclick = function(event) {

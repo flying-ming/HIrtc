@@ -1,6 +1,7 @@
 function createFriendChatPanel(friendId) {
     var el = $('<div class="chat-content"></div>');
     el.friendId = friendId;
+    el.attr('id','content'+friendId);
     return el;
 }
 var currentChatPanel = null;

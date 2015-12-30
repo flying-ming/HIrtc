@@ -87,9 +87,9 @@ var MyRTC = function () {
         //保存所有接受到的文件
         this.receiveFiles = {};
         //保存现在正在聊天的好友id
-        this.curFriendId = null;
-        //保存目前好友列表中第一位的好友id
-        this.curFirstFriendId = null;
+        //this.curFriendId = null;
+        ////保存目前好友列表中第一位的好友id
+        //this.curFirstFriendId = null;
     }
 
     //继承自事件处理器，提供绑定事件和触发事件的功能
@@ -151,6 +151,15 @@ var MyRTC = function () {
             }));
         };
 
+        //接收到从服务器发来的私聊消息
+        this.on('privMessage', function(data){
+            //画到html上
+            var div = document.createElement("div");
+            div.innerText = data.friendName + ": " + data.message;
+            //此时也许有许多 friend  聊天面板
+            var privMsge = document.getElementById('content'+data.friendId);
+            privMsge.appendChild(div);
+        });
 
         this.on('_peers', function (data) {
             //获取服务器上所有的socketid
@@ -235,6 +244,7 @@ var MyRTC = function () {
                 //获得，所有好友的userName
                 //将服务器上所有socketid对应的name记下来
                 this.window.rtc.peerConnectionsName = data.userNames;
+                this.window.rtc.getCategoryInfo();
             } else {
                 alert('登陆失败，密码错误或者重复登陆');
             }
@@ -278,6 +288,7 @@ var MyRTC = function () {
                     (function () {
                         var friend = group.friends[friendIndex];
                         var friendEl = $('<li><a href="#">' + friend.name + '</a></li>');
+                        //好友按钮被点击的时候
                         friendEl.click(function () {
                             var panel;
                             if (friend.id in friendChatPanels) {
@@ -285,6 +296,7 @@ var MyRTC = function () {
                             } else {
                                 panel = createFriendChatPanel(friend.id);
                                 friendChatPanels[friend.id] = panel;
+                                window.curFriendId = friend.id;
                                 panel.append($('<span>你正在与 ' + friend.name + '聊天</span>'));
                                 panel.hide();
                                 $('#panel2').prepend(panel);
@@ -685,9 +697,26 @@ var MyRTC = function () {
 
 
     /***********************数据通道连接部分*****************************/
+    //私聊消息，基于websocket
+    myrtc.prototype.privMessage = function (message,friendId) {
+        //that = this;
+        //需要判断此好友是否在线
+        //////////////////////////////////////////////////////////
+        this.socket.send(JSON.stringify({
+            "eventName": "_privMessage",
+            "data": {
+                "message":message,
+                "friendId":friendId,
+                "userId":userId
+                //"label": evt.candidate.sdpMLineIndex,
+                //"candidate": evt.candidate.candidate,
+                //"socketId": socketId
+                //"userName":peerConnectionsName[socketId]
+            }
+        }));
+    };
 
-
-        //消息广播
+    //消息广播
     myrtc.prototype.broadcast = function (message) {
         var socketId;
         for (socketId in this.dataChannels) {
