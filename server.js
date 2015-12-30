@@ -10,7 +10,7 @@ userSockets = {};
 //用来保存当前连接服务器用户的id ，键是 socket.id ，值是 userId
 //这么做主要是为了，根据socket索引 userId，比如，socket关闭的时候，
 userIds = {};
-//用来保存当前连接服务器的所有用户的userName ，键是 socket.id ，值是 {name:userName,id:userid}
+//用来保存当前连接服务器的所有 登陆  用户的userName ，键是 socket.id ，值是 {name:userName,id:userid}
 userNames = {};
 
 //数据库
@@ -751,6 +751,23 @@ function Myrtc() {
                 "friendName":userNames[socket.id].name
             }
         }),errorCb);
+    });
+
+    //挥手
+    this.on('__waveHands', function (data, socket) {
+        //向每个登陆过的好友发送挥手消息
+        var i;
+        for( i in userNames){
+            userSockets[userNames[i].id].send(JSON.stringify({
+                "eventName": "_waveHands",
+                "data": {
+                    //"message":data.message,
+                    //"friendId":data.userId,
+                    //"friendName":userNames[socket.id].name
+                    "userId":data.userId
+                }
+            }),errorCb);
+        }
     });
 
     //与客户端交互， 点对点连接部分 this.on() 对应着 myrtc.socket.send()

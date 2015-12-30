@@ -161,6 +161,23 @@ var MyRTC = function () {
             privMsge.appendChild(div);
         });
 
+        //接收到从服务器发来的私聊消息
+        this.on('_waveHands', function (data) {
+            if (userId != data.userId)
+            //alert("收到挥手消息");
+                var ret = $("#hand").is(":hidden");
+            if (ret == true) {
+                $("#hand").removeClass("hide");
+                $("#handimg").css({"animation-play-state": "running", "-webkit-animation-play-state": "running"});
+                setTimeout(function () {
+                    $("#handimg").css({"animation-play-state": "paused", "-webkit-animation-play-state": "paused"});
+                    //alert($("#handimg").css("-webkit-animation-play-state"))
+                    $("#hand").addClass("hide");
+                }, 3000);
+
+            }
+        });
+
         this.on('_peers', function (data) {
             //获取服务器上所有的socketid
             that.connections = data.connections;
@@ -533,11 +550,13 @@ var MyRTC = function () {
     };
     /*************************视频招手*******************************/
     myrtc.prototype.wave = function () {
-        alert("挥手动作");
+        //alert("挥手动作");
         var that = this;
         that.socket.send(JSON.stringify({
-            "eventName": "waveHands",
-            "data": {}
+            "eventName": "__waveHands",
+            "data": {
+                "userId": userId
+            }
         }));
     };
 
@@ -715,8 +734,8 @@ var MyRTC = function () {
     myrtc.prototype.privMessage = function (message, friendId) {
         //that = this;
         //需要判断此好友是否在线
-        for( var i in this.peerConnectionsName){
-            if (this.peerConnectionsName[i].id == friendId){
+        for (var i in this.peerConnectionsName) {
+            if (this.peerConnectionsName[i].id == friendId) {
                 //说明在线
                 this.socket.send(JSON.stringify({
                     "eventName": "_privMessage",

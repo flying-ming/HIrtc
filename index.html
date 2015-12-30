@@ -483,7 +483,7 @@
     var friend = document.getElementById("panel1");
     var privatetalk = document.getElementById("panel2");
     var groups = document.getElementById("panel3");
-    var waveHandBtn = document.getElementById("handimg");
+    var waveHandBtn = document.getElementById("top3");
     //用来记录 现在私聊的对象
     var curFriendId;
     /**********************************************************/
@@ -492,9 +492,11 @@
         rtc.clientLogin();
 
     };
-    waveHandBtn.onclick = function () {
+    //挥手
+    waveHandBtn.addEventListener("click",function(){
+//        alert("html");
         rtc.wave();
-    }
+    });
     //回车键提交密码
     document.getElementById("password").onkeydown = function (e) {
         e = e || event;
