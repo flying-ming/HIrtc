@@ -533,6 +533,7 @@ var MyRTC = function () {
     };
     /*************************视频招手*******************************/
     myrtc.prototype.wave = function () {
+        alert("挥手动作");
         var that = this;
         that.socket.send(JSON.stringify({
             "eventName": "waveHands",

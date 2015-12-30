@@ -338,7 +338,9 @@
 <!--这是工具栏-->
 <div id="sign1" class="rightsign" style="display:none;"><img src="image/right.png"/></div>
 <!--这是举手-->
-<div id="hand" class="divhand hide"><img id="handimg" src="image/handup.png"></div>
+<div id="hand" class="divhand hide">
+    <img id="handimg" src="image/handup.png">
+</div>
 <!--邀请表单-->
 <div class="modal fade" id="modal-container-649826" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -472,7 +474,6 @@
     var videos = document.getElementById("videos");
     var sendBtn = document.getElementById("sendBtn");
     var privateSendBtn = document.getElementById("privateSendBtn");
-//    var privMsgs = document.getElementById("privMsgs");
     var msgs = document.getElementById("msgs");
     //    var sendFileBtn = document.getElementById("sendFileBtn");
     var files = document.getElementById("files");
@@ -482,6 +483,7 @@
     var friend = document.getElementById("panel1");
     var privatetalk = document.getElementById("panel2");
     var groups = document.getElementById("panel3");
+    var waveHandBtn = document.getElementById("handimg");
     //用来记录 现在私聊的对象
     var curFriendId;
     /**********************************************************/
@@ -490,6 +492,9 @@
         rtc.clientLogin();
 
     };
+    waveHandBtn.onclick = function () {
+        rtc.wave();
+    }
     //回车键提交密码
     document.getElementById("password").onkeydown = function (e) {
         e = e || event;
