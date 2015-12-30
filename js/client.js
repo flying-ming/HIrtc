@@ -513,7 +513,16 @@ var MyRTC = function () {
             }
         }));
     };
+/*************************视频招手*******************************/
+    myrtc.prototype.wave = function(){
+        var that = this;
+        that.socket.send(JSON.stringify({
+            "eventName":"waveHands",
+            "data":{
 
+            }
+        }));
+    };
 
     /*************************流处理部分*******************************/
 
