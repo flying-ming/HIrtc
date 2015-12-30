@@ -540,7 +540,7 @@
                 p = document.createElement("p");
         p.innerText = "me: " + msg;
         //广播消息
-        rtc.broadcast(msg,friendId);
+        rtc.broadcast(msg);
         msgIpt.value = "";
         msgs.appendChild(p);
     };
@@ -557,7 +557,7 @@
         //广播消息
         rtc.privMessage(msg,curFriendId);
         msgIpt.value = "";
-        var privMsge = document.getElementById('content'+curFriendId);
+        var privMsge = document.getElementById('content'+currentChatPanel.friendId);
         privMsge.appendChild(p);
     };
 

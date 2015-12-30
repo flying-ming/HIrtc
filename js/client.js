@@ -70,7 +70,7 @@ var MyRTC = function () {
         //this.groupPeerConnections = {};
         //保存所有与本地相连的peer connection， 键为socket id，值为PeerConnection类型
         this.peerConnections = {};
-        //保存所有与本地相连的peer connection， 键为socket id，值为userName类型
+        //保存所有与本地相连的peer connection， 键为socket id，值为{id:userId,name:userName}
         this.peerConnectionsName = {};
         //保存所有与本地连接的群成员socket的id
         this.groupConnections = [];
@@ -152,12 +152,12 @@ var MyRTC = function () {
         };
 
         //接收到从服务器发来的私聊消息
-        this.on('privMessage', function(data){
+        this.on('privMessage', function (data) {
             //画到html上
             var div = document.createElement("div");
             div.innerText = data.friendName + ": " + data.message;
             //此时也许有许多 friend  聊天面板
-            var privMsge = document.getElementById('content'+data.friendId);
+            var privMsge = document.getElementById('content' + data.friendId);
             privMsge.appendChild(div);
         });
 
@@ -195,7 +195,6 @@ var MyRTC = function () {
             var sendId;
             that.closePeerConnection(that.peerConnections[data.socketId]);
             delete that.peerConnections[data.socketId];
-            delete that.peerConnectionsName[data.socketId];
             delete that.dataChannels[data.socketId];
             for (sendId in that.fileChannels[data.socketId]) {
                 that.emit("send_file_error", new Error("Connection has been closed"), data.socketId, sendId, that.fileChannels[data.socketId][sendId].file);
@@ -203,6 +202,13 @@ var MyRTC = function () {
             delete that.fileChannels[data.socketId];
             that.emit("remove_peer", data.socketId);
         });
+
+        //有已经登录的好友离开
+        this.on('_friend_gone', function (data) {
+            //把 peerConnectionsName 相关的值删掉
+            delete that.peerConnectionsName[data.socketId];
+        });
+
 
         this.on('_offer', function (data) {
             that.receiveOffer(data.socketId, data.sdp);
@@ -253,7 +259,7 @@ var MyRTC = function () {
         //获得刚登陆的好友名字
         this.on('OtherName', function (data) {
             //获得好友的userName
-            this.window.rtc.peerConnectionsName[data.socketId] = data.userName;
+            this.window.rtc.peerConnectionsName[data.socketId] = {id: data.userId, name: data.userName};
 
         });
 
@@ -525,7 +531,14 @@ var MyRTC = function () {
             }
         }));
     };
-
+    /*************************视频招手*******************************/
+    myrtc.prototype.wave = function () {
+        var that = this;
+        that.socket.send(JSON.stringify({
+            "eventName": "waveHands",
+            "data": {}
+        }));
+    };
 
     /*************************流处理部分*******************************/
 
@@ -697,23 +710,25 @@ var MyRTC = function () {
 
 
     /***********************数据通道连接部分*****************************/
-    //私聊消息，基于websocket
-    myrtc.prototype.privMessage = function (message,friendId) {
+        //私聊消息，基于websocket
+    myrtc.prototype.privMessage = function (message, friendId) {
         //that = this;
         //需要判断此好友是否在线
-        //////////////////////////////////////////////////////////
-        this.socket.send(JSON.stringify({
-            "eventName": "_privMessage",
-            "data": {
-                "message":message,
-                "friendId":friendId,
-                "userId":userId
-                //"label": evt.candidate.sdpMLineIndex,
-                //"candidate": evt.candidate.candidate,
-                //"socketId": socketId
-                //"userName":peerConnectionsName[socketId]
+        for( var i in this.peerConnectionsName){
+            if (this.peerConnectionsName[i].id == friendId){
+                //说明在线
+                this.socket.send(JSON.stringify({
+                    "eventName": "_privMessage",
+                    "data": {
+                        "message": message,
+                        "friendId": friendId,
+                        "userId": userId
+                    }
+                }));
+                return;
             }
-        }));
+        }
+        alert("此好友不在线哦");
     };
 
     //消息广播
@@ -782,7 +797,7 @@ var MyRTC = function () {
                 /*that.receiveFileChunk(json);*/
                 that.parseFilePacket(json, socketId);
             } else {
-                that.emit('data_channel_message', channel, socketId, json.data, that.peerConnectionsName[socketId]);
+                that.emit('data_channel_message', channel, socketId, json.data, that.peerConnectionsName[socketId].name);
             }
         };
 

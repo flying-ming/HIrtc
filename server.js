@@ -10,7 +10,7 @@ userSockets = {};
 //用来保存当前连接服务器用户的id ，键是 socket.id ，值是 userId
 //这么做主要是为了，根据socket索引 userId，比如，socket关闭的时候，
 userIds = {};
-//用来保存当前连接服务器用户的userName ，键是 socket.id ，值是 userName
+//用来保存当前连接服务器的所有用户的userName ，键是 socket.id ，值是 {name:userName,id:userid}
 userNames = {};
 
 //数据库
@@ -206,8 +206,7 @@ function Myrtc() {
             curSocket.send(JSON.stringify({
                 "eventName": "_new_peer",
                 "data": {
-                    "socketId": socket.id,
-                    "userName":userNames[socket.id]
+                    "socketId": socket.id
                 }
             }), errorCb);
         }
@@ -219,8 +218,7 @@ function Myrtc() {
             "eventName": "_peers",
             "data": {
                 "connections": ids,
-                "you": socket.id,
-                "userNames":userNames
+                "you": socket.id
             }
         }), errorCb);
         //终端输出 有新用户连接服务器
@@ -359,7 +357,7 @@ function Myrtc() {
                                 //that.userSockets[strUserid] = socket;
                                 userSockets[data.userId] = socket;
                                 userIds[socket.id] = data.userId;
-                                userNames[socket.id] = userName;
+                                userNames[socket.id] = {name:userName,id:data.userId};
                                 console.log(clc.green('[ 消息 ]') + "id为" + data.userId + "的用户登陆成功");
                                 //给客户端发送登陆成功
                                 socket.send(JSON.stringify({
@@ -380,6 +378,7 @@ function Myrtc() {
                                     userSockets[i].send(JSON.stringify({
                                         "eventName": "OtherName",
                                         "data": {
+                                            "userId":data.userId,
                                             "userName": userName,
                                             "socketId": socket.id
                                         }
@@ -749,7 +748,7 @@ function Myrtc() {
             "data": {
                 "message":data.message,
                 "friendId":data.userId,
-                "friendName":userNames[socket.id]
+                "friendName":userNames[socket.id].name
             }
         }),errorCb);
     });
@@ -878,10 +877,13 @@ Myrtc.prototype.init = function (socket) {
     });
     //连接关闭后从RTC实例中移除连接，并通知其他连接
     socket.on('close', function () {
-        console.log(clc.blue('[ 调试 ]') + "有用户断开连接");
-        var i, m,
+        console.log(clc.yellow('[ 提示 ]') + "有用户断开连接");
+        var i, m,flag=0,
             room = socket.room,
             curRoom;
+        //不等于空，说明，已登录
+        if(userNames[socket.id] != undefined)
+        flag =1;
         if (room) {
             curRoom = that.rooms[room];
             for (i = curRoom.length; i--;) {
@@ -894,6 +896,15 @@ Myrtc.prototype.init = function (socket) {
                         "socketId": socket.id
                     }
                 }), errorCb);
+                //如果这个用户已经登录
+                if(flag){
+                    curRoom[i].send(JSON.stringify({
+                        "eventName": "_friend_gone",
+                        "data": {
+                            "socketId": socket.id
+                        }
+                    }), errorCb);
+                }
             }
         }
 
@@ -903,7 +914,10 @@ Myrtc.prototype.init = function (socket) {
         //把 userSockets 移除
         delete userSockets[userIds[socket.id]];
         delete userIds[socket.id];
-        delete userNames[socket.id];
+        //如果已经登录
+        if(flag){
+            delete userNames[socket.id];
+        }
 
     });
     that.emit('new_connect', socket);
