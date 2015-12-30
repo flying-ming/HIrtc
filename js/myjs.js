@@ -116,7 +116,8 @@ function checkCookie() {
 
 function winclose() {
     deleteCookie();
-    window.close();
+
+    parent.location.reload();
 }
 
 
