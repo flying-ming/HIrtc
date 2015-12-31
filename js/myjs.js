@@ -12,7 +12,7 @@ $(document).ready(function (e) {
     $("#hand").css("top", $(window).height() / 2 - 64 + "px");
 
     $("#top2").click(function () {
-        var str = $("#mic").attr("src");
+        var str = $("#videoBtn").attr("src");
         var n = str.search("mic.png");
         if (n != -1) {
             $("#mic").attr("src", "image/micstop.png")

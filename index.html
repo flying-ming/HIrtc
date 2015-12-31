@@ -34,15 +34,15 @@
             overflow: auto;
         }
 
-        #videos video {
-            display: inline-block;
-            width: 20%;
-        }
-
         /*#videos video {*/
-        /*display: inline-block;*/
-        /*width:30%;*/
+            /*display: inline-block;*/
+            /*width: 20%;*/
         /*}*/
+
+        #videos video {
+        display: inline-block;
+        width:30%;
+        }
 
         #me {
             display: inline-block;
@@ -182,7 +182,7 @@
                             class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span
                             class="icon-bar"></span><span class="icon-bar"></span></button>
                     <a class="navbar-brand" style="font-size:30px; padding-top:20px;"
-                       href="javascript:location.reload()">爱会议</a>
+                       href="javascript:location.reload()">HIrtc</a>
                 </div>
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                     <ul class="nav navbar-nav">
@@ -190,7 +190,7 @@
                     <ul class="nav navbar-nav navbar-right">
                         <li>
                             <div id="theme" class="theme">
-                                <span class="themetop">主题</span>
+                                <span class="themetop"></span>
                                 <br>
                                 <span id="timer" class="themebottom"></span>
                             </div>
@@ -562,7 +562,7 @@
                 p = document.createElement("p");
         p.innerText = "me: " + msg;
         //广播消息
-        rtc.privMessage(msg,curFriendId);
+        rtc.privMessage(msg,currentChatPanel.friendId);
         msgIpt.value = "";
         var privMsge = document.getElementById('content'+currentChatPanel.friendId);
         privMsge.appendChild(p);

@@ -12,6 +12,8 @@ userSockets = {};
 userIds = {};
 //用来保存当前连接服务器的所有 登陆  用户的userName ，键是 socket.id ，值是 {name:userName,id:userid}
 userNames = {};
+//用来保存 登陆并且打开了视频的 用户    键是 socket.id ，值是 {name:userName,id:userid}
+readyUsers = {};
 
 //数据库
 //启动数据库
@@ -190,9 +192,7 @@ function Myrtc() {
         var names = {
 
         };
-
         curRoom = this.rooms[room] = this.rooms[room] || [];
-
         //给在线的所有客户端发送新的用户的socketid
         for (i = 0, m = curRoom.length; i < m; i++) {
             curSocket = curRoom[i];
@@ -203,17 +203,45 @@ function Myrtc() {
             ids.push(curSocket.id);
             //与客户端交互
             //告诉其他所有客户端，有新用户连接
-            curSocket.send(JSON.stringify({
-                "eventName": "_new_peer",
-                "data": {
-                    "socketId": socket.id
-                }
-            }), errorCb);
+            //被修改，只把这个消息告诉已经准备好视频的用户
+            //curSocket.send(JSON.stringify({
+            //    "eventName": "_new_peer",
+            //    "data": {
+            //        "socketId": socket.id
+            //    }
+            //}), errorCb);
         }
-
         curRoom.push(socket);
         socket.room = room;
         //把所有连接服务器的客户端id发给这个新用户
+        //被修改，开启视频的时候才发送这个东西
+        //socket.send(JSON.stringify({
+        //    "eventName": "_peers",
+        //    "data": {
+        //        "connections": ids,
+        //        "you": socket.id
+        //    }
+        //}), errorCb);
+        //终端输出 有新用户连接服务器
+        this.emit('new_peer', socket, room);
+    });
+
+    //客户端准备好视频，将其他能够视频的 用户信息发给客户端
+    //并将此用户的信息，发给其他能视频的 客户端
+    this.on('_readyVideo', function( data,socket){
+        //用来保存所有登陆且打开视频的用户socketid
+        var ids=[],i;
+        for( i in readyUsers){
+            ids.push(userSockets[readyUsers[i].id].id);
+        }
+        console.log(clc.red('[ 调试 ]') + "服务端收到客户端准备好的消息");
+        //var that = this;
+        socket.send(JSON.stringify({
+            "eventName": "_old_readyVideo",
+            "data": {
+                "readyUsers":readyUsers
+            }
+        }), errorCb);
         socket.send(JSON.stringify({
             "eventName": "_peers",
             "data": {
@@ -221,8 +249,23 @@ function Myrtc() {
                 "you": socket.id
             }
         }), errorCb);
-        //终端输出 有新用户连接服务器
-        this.emit('new_peer', socket, room);
+        for( i in readyUsers){
+            userSockets[readyUsers[i].id].send(JSON.stringify({
+                "eventName": "_new_readyVideo",
+                "data": {
+                    "userId": data.userId,
+                    "userName": data.userName,
+                    "socketId": socket.id
+                }
+            }), errorCb);
+            userSockets[readyUsers[i].id].send(JSON.stringify({
+                "eventName": "_new_peer",
+                "data": {
+                    "socketId": socket.id
+                }
+            }), errorCb);
+        }
+        readyUsers[socket.id] = {id:data.userId,name:data.userName};
     });
 
     //注册
@@ -284,13 +327,6 @@ function Myrtc() {
                         }), errorCb);
                         console.log(clc.blue('[ 调试 ]') + maxid + "注册成功");
                     });
-
-                    //用uid赋值socket.name,作为以后socket标识
-                    // socket.name = maxid;
-                    //这里记录下每个用户登陆的socket
-                    // socketId[socketId.length] = socket.id;
-                    // console.log("注册时记录的id"+socket.id);
-                    // socketUid[socketUid.length] = maxid;
                 });
         });
     });
@@ -761,16 +797,13 @@ function Myrtc() {
             userSockets[userNames[i].id].send(JSON.stringify({
                 "eventName": "_waveHands",
                 "data": {
-                    //"message":data.message,
-                    //"friendId":data.userId,
-                    //"friendName":userNames[socket.id].name
                     "userId":data.userId
                 }
             }),errorCb);
         }
     });
 
-    //与客户端交互， 点对点连接部分 this.on() 对应着 myrtc.socket.send()
+    //服务端 转发 客户端之间 的信道连接
     this.on('__ice_candidate', function (data, socket) {
         var soc = this.getSocket(data.socketId);
 
@@ -895,12 +928,14 @@ Myrtc.prototype.init = function (socket) {
     //连接关闭后从RTC实例中移除连接，并通知其他连接
     socket.on('close', function () {
         console.log(clc.yellow('[ 提示 ]') + "有用户断开连接");
-        var i, m,flag=0,
+        var i, m,flag1=0,flag2 = 0,
             room = socket.room,
             curRoom;
         //不等于空，说明，已登录
         if(userNames[socket.id] != undefined)
-        flag =1;
+        flag1 =1;
+        if(readyUsers[socket.id] != undefined)
+        flag2 =1;
         if (room) {
             curRoom = that.rooms[room];
             for (i = curRoom.length; i--;) {
@@ -914,13 +949,22 @@ Myrtc.prototype.init = function (socket) {
                     }
                 }), errorCb);
                 //如果这个用户已经登录
-                if(flag){
+                if(flag1){
                     curRoom[i].send(JSON.stringify({
                         "eventName": "_friend_gone",
                         "data": {
                             "socketId": socket.id
                         }
                     }), errorCb);
+                    //如果还是 视频准备好的用户的话
+                    if(flag2){
+                        curRoom[i].send(JSON.stringify({
+                            "eventName": "_video_friend_gone",
+                            "data": {
+                                "socketId": socket.id
+                            }
+                        }), errorCb);
+                    }
                 }
             }
         }
@@ -932,8 +976,11 @@ Myrtc.prototype.init = function (socket) {
         delete userSockets[userIds[socket.id]];
         delete userIds[socket.id];
         //如果已经登录
-        if(flag){
+        if(flag1){
             delete userNames[socket.id];
+        }
+        if(flag2){
+            delete readyUsers[socket.id];
         }
 
     });

@@ -13,7 +13,7 @@ var MyRTC = function () {
     };
     var friendChatPanels = {};
     //保存这个客户端的 userId
-    var userId;
+    var userId = null;
     //保存这个客户端的username
     var userName;
     var packetSize = 1000;
@@ -90,6 +90,8 @@ var MyRTC = function () {
         //this.curFriendId = null;
         ////保存目前好友列表中第一位的好友id
         //this.curFirstFriendId = null;
+        //用来保存 登陆并且打开了视频的 用户    键是 socket.id ，值是 {name:userName,id:userid}
+        this.readyUsers = {};
     }
 
     //继承自事件处理器，提供绑定事件和触发事件的功能
@@ -99,7 +101,7 @@ var MyRTC = function () {
     /*************************服务器连接部分***************************/
 
 
-        //本地连接信道，信道为websocket
+    //本地连接信道，信道为websocket
     myrtc.prototype.connect = function (server, room) {
         var socket,
             that = this;
@@ -132,6 +134,7 @@ var MyRTC = function () {
         socket.onclose = function (data) {
             that.localMediaStream.close();
             var pcs = that.peerConnections;
+            var i;
             for (i = pcs.length; i--;) {
                 that.closePeerConnection(pcs[i]);
             }
@@ -153,28 +156,42 @@ var MyRTC = function () {
 
         //接收到从服务器发来的私聊消息
         this.on('privMessage', function (data) {
+            var privMsge = document.getElementById('content' + data.friendId);
+            //检查是否有此好友 的聊天面板
+            if(privMsge == undefined){
+                //没有，重新创建聊天面板
+                var panel;
+                if (data.friendId in friendChatPanels) {
+                    panel = friendChatPanels[data.friendId];
+                } else {
+                    panel = createFriendChatPanel(data.friendId);
+                    friendChatPanels[data.friendId] = panel;
+                    panel.append($('<span>你正在与 ' + data.friendName + '聊天</span>'));
+                    panel.hide();
+                    $('#panel2').prepend(panel);
+                }
+                privMsge = document.getElementById('content' + data.friendId);
+            }
             //画到html上
             var div = document.createElement("div");
             div.innerText = data.friendName + ": " + data.message;
-            //此时也许有许多 friend  聊天面板
-            var privMsge = document.getElementById('content' + data.friendId);
             privMsge.appendChild(div);
         });
 
         //接收到从服务器发来的私聊消息
         this.on('_waveHands', function (data) {
-            if (userId != data.userId)
-            //alert("收到挥手消息");
+            //如果发起者是自己
+            if (userId != data.userId){
                 var ret = $("#hand").is(":hidden");
-            if (ret == true) {
-                $("#hand").removeClass("hide");
-                $("#handimg").css({"animation-play-state": "running", "-webkit-animation-play-state": "running"});
-                setTimeout(function () {
-                    $("#handimg").css({"animation-play-state": "paused", "-webkit-animation-play-state": "paused"});
-                    //alert($("#handimg").css("-webkit-animation-play-state"))
-                    $("#hand").addClass("hide");
-                }, 3000);
-
+                if (ret == true) {
+                    $("#hand").removeClass("hide");
+                    $("#handimg").css({"animation-play-state": "running", "-webkit-animation-play-state": "running"});
+                    setTimeout(function () {
+                        $("#handimg").css({"animation-play-state": "paused", "-webkit-animation-play-state": "paused"});
+                        //alert($("#handimg").css("-webkit-animation-play-state"))
+                        $("#hand").addClass("hide");
+                    }, 3000);
+                }
             }
         });
 
@@ -189,6 +206,7 @@ var MyRTC = function () {
             that.emit('connected', socket);
         });
 
+        //接收到 对方传过来的 ice_candidate 信息
         this.on("_ice_candidate", function (data) {
             var candidate = new nativeRTCIceCandidate(data);
             var pc = that.peerConnections[data.socketId];
@@ -196,9 +214,27 @@ var MyRTC = function () {
             that.emit('get_ice_candidate', candidate);
         });
 
+        //接收到 准备好之前存在的 开了视频用户的信息
+        this.on("_old_readyVideo",function(data){
+            this.window.rtc.readyUsers = data.readyUsers;
+        });
+        //接收到 准备好之后新开的 开了视频用户的信息
+        this.on("_new_readyVideo",function(data){
+            this.window.rtc.readyUsers[data.socketId] = {id:data.userId,name:userName};
+            var that = this;
+        });
+        //接收到 视频用户离开的信息
+        this.on("_video_friend_gone",function(data){
+            delete this.window.rtc.readyUsers[data.socketId];
+            var that = this;
+        });
+
         //有新用户 连接服务器 把他加入 connections中保存
         //有好友的群成员连接服务器的话 把他加入 groupConnections中保存
         this.on('_new_peer', function (data) {
+            //如果没登录  不执行这个操作
+            if(userId == null)
+                return ;
             that.connections.push(data.socketId);
             //that.groupConnections.push(data.socketId);
             var pc = that.createPeerConnection(data.socketId),
@@ -209,6 +245,9 @@ var MyRTC = function () {
 
         //有用户离开
         this.on('_remove_peer', function (data) {
+            //如果客户端没有登录则不运行这个函数
+            if(userId == undefined)
+            return ;
             var sendId;
             that.closePeerConnection(that.peerConnections[data.socketId]);
             delete that.peerConnections[data.socketId];
@@ -222,8 +261,14 @@ var MyRTC = function () {
 
         //有已经登录的好友离开
         this.on('_friend_gone', function (data) {
+            //将 相应的好友的 状态设置为 离线
+            var frdBtnA = document.getElementById("frdBtn"+that.peerConnectionsName[data.socketId].id);
+            if( frdBtnA != undefined){
+                frdBtnA.style.color = "#d9d9d9";
+            }
             //把 peerConnectionsName 相关的值删掉
             delete that.peerConnectionsName[data.socketId];
+
         });
 
 
@@ -245,6 +290,7 @@ var MyRTC = function () {
             that.cleanReceiveFile(sendId);
         });
 
+        //本地视频准备好  后
         this.on('ready', function () {
             that.createPeerConnections();
             that.addStreams();
@@ -252,7 +298,7 @@ var MyRTC = function () {
             that.sendOffers();
         });
 
-        //获得从服务器发来的验证消息结果
+        //获得从服务器发来的验证登陆消息结果
         this.on('password', function (data) {
             //验证成功，登陆
             if (data.flag) {
@@ -268,6 +314,8 @@ var MyRTC = function () {
                 //将服务器上所有socketid对应的name记下来
                 this.window.rtc.peerConnectionsName = data.userNames;
                 this.window.rtc.getCategoryInfo();
+                //将html中加上自己的名字
+                $(".themetop").append(data.userName);
             } else {
                 alert('登陆失败，密码错误或者重复登陆');
             }
@@ -277,6 +325,11 @@ var MyRTC = function () {
         this.on('OtherName', function (data) {
             //获得好友的userName
             this.window.rtc.peerConnectionsName[data.socketId] = {id: data.userId, name: data.userName};
+            //将 相应的好友的 状态设置为 在线
+            var frdBtnA = document.getElementById("frdBtn"+that.peerConnectionsName[data.socketId].id);
+            if( frdBtnA != undefined){
+                frdBtnA.style.color = "green";
+            }
 
         });
 
@@ -310,7 +363,15 @@ var MyRTC = function () {
                 for (var friendIndex = 0; friendIndex < group.friends.length; friendIndex++) {
                     (function () {
                         var friend = group.friends[friendIndex];
-                        var friendEl = $('<li><a href="#">' + friend.name + '</a></li>');
+                        var friendEl = $('<li><a id="frdBtn'+friend.id+'"href="#";>' + friend.name + '</a></li>');
+                        //判断此时 friendId 是否在线
+                        //在线 将字体颜色设置为 蓝色
+                        var i;
+                        for( i in that.peerConnectionsName){
+                            if( that.peerConnectionsName[i].id == friend.id ){
+                                friendEl[0].lastChild.style.color='green';
+                            }
+                        }
                         //好友按钮被点击的时候
                         friendEl.click(function () {
                             var panel;
@@ -319,7 +380,6 @@ var MyRTC = function () {
                             } else {
                                 panel = createFriendChatPanel(friend.id);
                                 friendChatPanels[friend.id] = panel;
-                                window.curFriendId = friend.id;
                                 panel.append($('<span>你正在与 ' + friend.name + '聊天</span>'));
                                 panel.hide();
                                 $('#panel2').prepend(panel);
@@ -343,14 +403,6 @@ var MyRTC = function () {
                 }
                 $('#accordion').append(groupEl);
             }
-            //添加点击响应事件
-            //添加点击响应事件
-            // var frdTables = document.getElementsByName("link");
-            // for(var i=0;i<frdTables.length;i++){
-            //     frdTables[i].addEventListener("click",function(){
-            //         this.setAttribute("display","none");
-            //     },false);
-            // }
         }
 
         ////FIXME Test Code
@@ -367,6 +419,12 @@ var MyRTC = function () {
             $('#accordion').find('.submenu').not($next).slideUp().parent().removeClass('open');
         }
 
+        /**********************************************************/
+        /*                                                        */
+        /*                       好友操作                          */
+        /*                                                        */
+        /**********************************************************/
+
         /*******************验证好友************************/
         this.on('_reqAddFriend', function (data) {
             alert("收到好友请求");
@@ -374,10 +432,6 @@ var MyRTC = function () {
                 alert("请求好友错误");
                 return;
             }
-            //var that = this;
-            //var addfriend_id = data.reqFriendid;
-            //var addfriend_name = data.friend_name;
-            //var soc = this.getSocket(data.socketId);
             //同意添加   不同意添加
             $('#friendapplication').modal('show');
             var modal = $('#friendapplication');
@@ -411,36 +465,9 @@ var MyRTC = function () {
                     }
                 }));
             };
-
-            //if (result) {
-            //    that.socket.send(JSON.stringify({
-            //        "eventName": "__addFriend",
-            //        "data": {
-            //            "userId": userId,
-            //            "userName":userName,
-            //            "reqFriendId":data.reqFriendId,
-            //            "reqFriendName":data.reqFriendName,
-            //            "flag":0
-            //        }
-            //    }));
-            //} else {
-            //    //拒绝添加好友
-            //    that.socket.send(JSON.stringify({
-            //        "eventName": "refuse_addFreiend",
-            //        "data": {
-            //            "userId": userId,
-            //            "userName":userName,
-            //            "reqFriendId":data.reqFriendId,
-            //            "reqFriendName":data.reqFriendName,
-            //            "flag":1
-            //        }
-            //    }));
-            //}
-
-
         });
 
-        /**************************拒绝添加好友****************************************/
+        /**************************拒绝添加好友***********************/
 
         this.on('refuse_addFreiend', function (data) {
             if (!data.flag) {
@@ -450,7 +477,7 @@ var MyRTC = function () {
                 return;
             }
         });
-        /**************************验证删除好友成功**************************************/
+        /********************验证删除好友成功******************/
         this.on('delFriend', function (data) {
 
             if (!data.flag) {
@@ -459,7 +486,7 @@ var MyRTC = function () {
                 return;
             }
         });
-        /***************************接到好友添加成功的消息*******************/
+        /******************接到好友添加成功的消息*******************/
         this.on('_addFriend', function (data) {
             alert("你和" + data.friendName + "已经成为好友了，开始聊天吧");
             //通知服务器重新发一遍好友列表
@@ -473,8 +500,38 @@ var MyRTC = function () {
         });
     };
 
+    /*************************添加好友的申请*****************************/
+    myrtc.prototype.reqfriend = function () {
+        var that = this;
+        var addfriend_id = document.getElementById("addfriend_id").value;
+        var addfriend_text = document.getElementById("addfriend_text").value;
+        //alert(addfriend_id);
+        that.socket.send(JSON.stringify({
+            "eventName": "__reqFriend",
+            "data": {
+                "friend_id": addfriend_id,
+                "userId": userId,
+                "userName": userName,
+                "reqFriendMessage": addfriend_text
+            }
+        }));
+    };
 
-    /*************************客户端登陆部分*******************************/
+    /*************************删除好友****************************/
+    myrtc.prototype.delfriend = function () {
+        var that = this;
+        var delfriend_id = document.getElementById("delfriend_id").value;
+
+        that.socket.send(JSON.stringify({
+            "eventName": "__delFriend",
+            "data": {
+                "friend_id": delfriend_id,
+                "user_id": userId
+            }
+        }));
+    };
+
+    /*********************客户端登陆部分************************/
     myrtc.prototype.register = function () {
         var that = this;
         var userName = document.getElementById("nickname").value;
@@ -518,36 +575,7 @@ var MyRTC = function () {
             }
         }));
     };
-    /*************************添加好友的申请*****************************/
-    myrtc.prototype.reqfriend = function () {
-        var that = this;
-        var addfriend_id = document.getElementById("addfriend_id").value;
-        var addfriend_text = document.getElementById("addfriend_text").value;
-        //alert(addfriend_id);
-        that.socket.send(JSON.stringify({
-            "eventName": "__reqFriend",
-            "data": {
-                "friend_id": addfriend_id,
-                "userId": userId,
-                "userName": userName,
-                "reqFriendMessage": addfriend_text
-            }
-        }));
-    };
 
-    /*************************删除好友****************************/
-    myrtc.prototype.delfriend = function () {
-        var that = this;
-        var delfriend_id = document.getElementById("delfriend_id").value;
-
-        that.socket.send(JSON.stringify({
-            "eventName": "__delFriend",
-            "data": {
-                "friend_id": delfriend_id,
-                "user_id": userId
-            }
-        }));
-    };
     /*************************视频招手*******************************/
     myrtc.prototype.wave = function () {
         //alert("挥手动作");
@@ -562,8 +590,8 @@ var MyRTC = function () {
 
     /*************************流处理部分*******************************/
 
-
-        //创建本地流
+    //创建本地流
+    //点击 开始 视频 运行的函数
     myrtc.prototype.createStream = function (options) {
         var that = this;
 
@@ -578,6 +606,14 @@ var MyRTC = function () {
                     that.emit("stream_created", stream);
                     if (that.initializedStreams === that.numStreams) {
                         that.emit("ready");
+                        //此时通知服务器，已准备好 视频
+                        that.socket.send(JSON.stringify({
+                            "eventName": "_readyVideo",
+                            "data": {
+                                "userId": userId,
+                                "userName":userName
+                            }
+                        }));
                     }
                 },
                 function (error) {
@@ -614,7 +650,7 @@ var MyRTC = function () {
     /***********************信令交换部分*******************************/
 
 
-        //向所有PeerConnection发送Offer类型信令
+    //向所有PeerConnection发送Offer类型信令
     myrtc.prototype.sendOffers = function () {
         var i, m,
             pc,
@@ -675,7 +711,7 @@ var MyRTC = function () {
     /***********************点对点连接部分*****************************/
 
 
-        //创建与其他用户连接的PeerConnections
+    //创建与其他用户连接的PeerConnections
     myrtc.prototype.createPeerConnections = function () {
         var i, m;
         for (i = 0, m = this.connections.length; i < m; i++) {
@@ -710,6 +746,7 @@ var MyRTC = function () {
             alert("调试");
         }
 
+        //创建 其他用户的视频流
         pc.onaddstream = function (evt) {
             that.emit('pc_add_stream', evt.stream, socketId, pc);
             //alert("有视频接入");
